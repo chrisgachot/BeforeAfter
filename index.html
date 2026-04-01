@@ -14,9 +14,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
-    width: 100%;
-    height: 100%;
-    height: 100dvh;
+    width: 100%; height: 100%; height: 100dvh;
     overflow: hidden;
     background: #0f0f0f;
   }
@@ -28,7 +26,7 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* ── Toggle bar ── */
+  /* ── Toolbar ── */
   #toolbar {
     flex-shrink: 0;
     display: flex;
@@ -55,61 +53,37 @@
     -webkit-tap-highlight-color: transparent;
     transition: all 0.18s;
   }
+  .toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .toggle-btn.active { background: #1e1e1e; border-color: #444; color: #ccc; }
 
-  .toggle-btn svg {
-    width: 13px;
-    height: 13px;
-    flex-shrink: 0;
-  }
-
-  .toggle-btn.active {
-    background: #1e1e1e;
-    border-color: #444;
-    color: #ccc;
-  }
-
-  /* ── Photo container ── */
+  /* ── Container ── */
   #photo-container {
     flex: 1;
     display: flex;
     min-height: 0;
   }
+  #photo-container.layout-stacked { flex-direction: column; }
+  #photo-container.layout-side    { flex-direction: row; }
 
-  #photo-container.layout-stacked {
-    flex-direction: column;
-  }
-
-  #photo-container.layout-side {
-    flex-direction: row;
-  }
-
-  /* ── Individual panel ── */
+  /* ── Panel ── */
   .panel {
     flex: 1;
     position: relative;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     background: #1a1a1a;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
     min-width: 0;
     min-height: 0;
+    /* no cursor:pointer — handled by children */
   }
 
   .layout-stacked .panel--before { border-bottom: 1px solid #000; }
   .layout-side    .panel--before { border-right:  1px solid #000; }
 
-  /* ── Label pill ── */
+  /* ── Label ── */
   .label {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    top: 10px; left: 10px;
+    z-index: 20;
     padding: 5px 11px;
     border-radius: 20px;
     font-size: 11px;
@@ -118,176 +92,367 @@
     text-transform: uppercase;
     font-weight: 600;
     pointer-events: none;
-    /* solid background for legibility */
     box-shadow: 0 1px 6px rgba(0,0,0,0.5);
   }
+  .panel--before .label { background: #e85d3a; color: #fff; }
+  .panel--after  .label { background: #3ab88a; color: #fff; }
+  .layout-side .label { font-size: 9px; padding: 4px 8px; letter-spacing: 0.10em; }
 
-  .panel--before .label {
-    background: #e85d3a;
+  /* ── Zoom controls ── */
+  .zoom-controls {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    z-index: 20;
+    display: none; /* shown once photo loaded */
+    flex-direction: column;
+    gap: 4px;
+  }
+  .zoom-controls.visible { display: flex; }
+
+  .zoom-btn {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0,0,0,0.55);
     color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-family: 'DM Mono', monospace;
+    user-select: none;
   }
-
-  .panel--after .label {
-    background: #3ab88a;
-    color: #fff;
-  }
-
-  /* smaller label text in side-by-side so it fits */
-  .layout-side .label {
-    font-size: 9px;
-    padding: 4px 8px;
-    letter-spacing: 0.10em;
-  }
+  .zoom-btn:active { background: rgba(255,255,255,0.15); }
 
   /* ── Empty state ── */
   .empty {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     pointer-events: none;
     user-select: none;
     opacity: 0.22;
   }
-
   .empty svg { width: 34px; height: 34px; }
+  .empty-text { font-size: 11px; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
 
-  .empty-text {
-    font-size: 11px;
-    color: #fff;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.06em;
-  }
-
-  /* ── File input ── */
-  .panel input[type="file"] {
+  /* ── Upload trigger (only visible when no photo) ── */
+  .upload-trigger {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 5;
-  }
-
-  /* ── Preview image ── */
-  .preview-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-  }
-  .preview-img.visible { display: block; }
-
-  /* ── Tap-to-change: hidden by default, shown only on hover (desktop) ── */
-  .tap-change {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    font-size: 9px;
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.08em;
-    padding: 4px 8px;
-    border-radius: 4px;
-    opacity: 0;
-    pointer-events: none;
     z-index: 10;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    transition: opacity 0.15s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
+  .upload-trigger input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%; height: 100%;
+    cursor: pointer;
+  }
+  /* hide upload trigger once photo is loaded */
+  .upload-trigger.hidden { display: none; }
 
-  /* Only reveal on hover — on touch devices this never triggers */
-  .panel:hover .tap-change { opacity: 1; }
-  /* Never show on touch/mobile */
-  @media (hover: none) {
-    .panel:hover .tap-change { opacity: 0; }
+  /* ── Zoomable image wrapper ── */
+  .zoom-wrapper {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    display: none; /* shown once photo loaded */
+    touch-action: none; /* we handle all touch ourselves */
+  }
+  .zoom-wrapper.visible { display: block; }
+
+  .zoom-wrapper img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform-origin: 0 0;
+    will-change: transform;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
   }
 </style>
 </head>
 <body>
 
-  <!-- Toolbar -->
-  <div id="toolbar">
-    <button class="toggle-btn active" id="btn-stacked" onclick="setLayout('stacked')">
-      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
-        <rect x="1" y="1" width="11" height="5" rx="1"/>
-        <rect x="1" y="7" width="11" height="5" rx="1"/>
-      </svg>
-      Top / Bottom
-    </button>
-    <button class="toggle-btn" id="btn-side" onclick="setLayout('side')">
-      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
-        <rect x="1" y="1" width="5" height="11" rx="1"/>
-        <rect x="7" y="1" width="5" height="11" rx="1"/>
-      </svg>
-      Side by Side
-    </button>
-  </div>
+<div id="toolbar">
+  <button class="toggle-btn active" id="btn-stacked" onclick="setLayout('stacked')">
+    <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+      <rect x="1" y="1" width="11" height="5" rx="1"/>
+      <rect x="1" y="7" width="11" height="5" rx="1"/>
+    </svg>
+    Top / Bottom
+  </button>
+  <button class="toggle-btn" id="btn-side" onclick="setLayout('side')">
+    <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+      <rect x="1" y="1" width="5" height="11" rx="1"/>
+      <rect x="7" y="1" width="5" height="11" rx="1"/>
+    </svg>
+    Side by Side
+  </button>
+</div>
 
-  <!-- Photos -->
-  <div id="photo-container" class="layout-stacked">
+<div id="photo-container" class="layout-stacked">
 
-    <div class="panel panel--before">
-      <div class="label">Before</div>
-      <div class="empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <path d="M21 15l-5-5L5 21"/>
-        </svg>
-        <span class="empty-text">tap to add photo</span>
-      </div>
-      <img class="preview-img" id="preview-before" alt="Before">
-      <span class="tap-change">tap to change</span>
+  <!-- BEFORE -->
+  <div class="panel panel--before" id="panel-before">
+    <div class="label">Before</div>
+    <div class="empty" id="empty-before">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span class="empty-text">tap to add photo</span>
+    </div>
+    <div class="upload-trigger" id="trigger-before">
       <input type="file" accept="image/*" id="input-before">
     </div>
-
-    <div class="panel panel--after">
-      <div class="label">After</div>
-      <div class="empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <path d="M21 15l-5-5L5 21"/>
-        </svg>
-        <span class="empty-text">tap to add photo</span>
-      </div>
-      <img class="preview-img" id="preview-after" alt="After">
-      <span class="tap-change">tap to change</span>
-      <input type="file" accept="image/*" id="input-after">
+    <div class="zoom-wrapper" id="zoom-before">
+      <img id="img-before" alt="Before">
     </div>
-
+    <div class="zoom-controls" id="zc-before">
+      <button class="zoom-btn" onclick="zoomStep('before', 0.3)">+</button>
+      <button class="zoom-btn" onclick="zoomStep('before', -0.3)">−</button>
+      <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('before')">↺</button>
+    </div>
   </div>
 
-<script>
-  // Photo upload
-  function setupUpload(inputId, previewId) {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    input.addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      preview.src = URL.createObjectURL(file);
-      preview.classList.add('visible');
-      // hide empty state
-      preview.closest('.panel').querySelector('.empty').style.display = 'none';
-    });
-  }
-  setupUpload('input-before', 'preview-before');
-  setupUpload('input-after',  'preview-after');
+  <!-- AFTER -->
+  <div class="panel panel--after" id="panel-after">
+    <div class="label">After</div>
+    <div class="empty" id="empty-after">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="M21 15l-5-5L5 21"/>
+      </svg>
+      <span class="empty-text">tap to add photo</span>
+    </div>
+    <div class="upload-trigger" id="trigger-after">
+      <input type="file" accept="image/*" id="input-after">
+    </div>
+    <div class="zoom-wrapper" id="zoom-after">
+      <img id="img-after" alt="After">
+    </div>
+    <div class="zoom-controls" id="zc-after">
+      <button class="zoom-btn" onclick="zoomStep('after', 0.3)">+</button>
+      <button class="zoom-btn" onclick="zoomStep('after', -0.3)">−</button>
+      <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('after')">↺</button>
+    </div>
+  </div>
 
-  // Layout toggle
-  function setLayout(mode) {
-    const container = document.getElementById('photo-container');
-    container.className = mode === 'side' ? 'layout-side' : 'layout-stacked';
-    document.getElementById('btn-stacked').classList.toggle('active', mode === 'stacked');
-    document.getElementById('btn-side').classList.toggle('active', mode === 'side');
+</div>
+
+<script>
+// ── State per panel ──
+const state = {
+  before: { scale: 1, tx: 0, ty: 0 },
+  after:  { scale: 1, tx: 0, ty: 0 }
+};
+
+// ── Apply transform ──
+function applyTransform(id) {
+  const { scale, tx, ty } = state[id];
+  const img = document.getElementById('img-' + id);
+  img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+// ── Clamp pan so image doesn't leave panel ──
+function clamp(id) {
+  const s = state[id];
+  const wrapper = document.getElementById('zoom-' + id);
+  const w = wrapper.clientWidth;
+  const h = wrapper.clientHeight;
+  const scaledW = w * s.scale;
+  const scaledH = h * s.scale;
+
+  // max pan: can't push image beyond edges
+  const maxTx = 0;
+  const minTx = w - scaledW;
+  const maxTy = 0;
+  const minTy = h - scaledH;
+
+  s.tx = Math.min(maxTx, Math.max(minTx, s.tx));
+  s.ty = Math.min(maxTy, Math.max(minTy, s.ty));
+}
+
+// ── Zoom step (buttons) ──
+function zoomStep(id, delta) {
+  const s = state[id];
+  const wrapper = document.getElementById('zoom-' + id);
+  const cx = wrapper.clientWidth / 2;
+  const cy = wrapper.clientHeight / 2;
+  const newScale = Math.max(1, Math.min(6, s.scale + delta));
+
+  // zoom toward center
+  const ratio = newScale / s.scale;
+  s.tx = cx - ratio * (cx - s.tx);
+  s.ty = cy - ratio * (cy - s.ty);
+  s.scale = newScale;
+  clamp(id);
+  applyTransform(id);
+}
+
+// ── Reset ──
+function zoomReset(id) {
+  state[id] = { scale: 1, tx: 0, ty: 0 };
+  applyTransform(id);
+}
+
+// ── Touch / pinch / pan handler ──
+function attachZoom(id) {
+  const wrapper = document.getElementById('zoom-' + id);
+  const s = state[id];
+  let touches = {};
+  let lastDist = null;
+  let lastMidX = null, lastMidY = null;
+
+  function getTouches(e) {
+    return Array.from(e.touches).filter(t =>
+      wrapper.contains(e.target) || e.target === wrapper
+    );
   }
+
+  wrapper.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const ts = Array.from(e.touches);
+    if (ts.length === 2) {
+      lastDist = Math.hypot(
+        ts[1].clientX - ts[0].clientX,
+        ts[1].clientY - ts[0].clientY
+      );
+      lastMidX = (ts[0].clientX + ts[1].clientX) / 2;
+      lastMidY = (ts[0].clientY + ts[1].clientY) / 2;
+    } else if (ts.length === 1) {
+      lastMidX = ts[0].clientX;
+      lastMidY = ts[0].clientY;
+      lastDist = null;
+    }
+  }, { passive: false });
+
+  wrapper.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const ts = Array.from(e.touches);
+    const rect = wrapper.getBoundingClientRect();
+
+    if (ts.length === 2) {
+      // Pinch zoom
+      const dist = Math.hypot(
+        ts[1].clientX - ts[0].clientX,
+        ts[1].clientY - ts[0].clientY
+      );
+      const midX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
+      const midY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
+
+      if (lastDist !== null) {
+        const ratio = dist / lastDist;
+        const newScale = Math.max(1, Math.min(6, s.scale * ratio));
+        const scaleRatio = newScale / s.scale;
+
+        // zoom toward pinch midpoint
+        s.tx = midX - scaleRatio * (midX - s.tx);
+        s.ty = midY - scaleRatio * (midY - s.ty);
+        s.scale = newScale;
+
+        // also pan by midpoint delta
+        if (lastMidX !== null) {
+          s.tx += midX - lastMidX;
+          s.ty += midY - lastMidY;
+        }
+      }
+
+      lastDist = dist;
+      lastMidX = midX;
+      lastMidY = midY;
+
+    } else if (ts.length === 1 && s.scale > 1) {
+      // Single finger pan (only when zoomed)
+      const cx = ts[0].clientX - rect.left;
+      const cy = ts[0].clientY - rect.top;
+      if (lastMidX !== null) {
+        s.tx += cx - lastMidX;
+        s.ty += cy - lastMidY;
+      }
+      lastMidX = cx;
+      lastMidY = cy;
+    }
+
+    clamp(id);
+    applyTransform(id);
+  }, { passive: false });
+
+  wrapper.addEventListener('touchend', e => {
+    const ts = Array.from(e.touches);
+    if (ts.length < 2) lastDist = null;
+    if (ts.length === 1) {
+      lastMidX = ts[0].clientX;
+      lastMidY = ts[0].clientY;
+    }
+    if (ts.length === 0) { lastMidX = null; lastMidY = null; }
+  }, { passive: false });
+
+  // Mouse wheel zoom (desktop)
+  wrapper.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = wrapper.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    const newScale = Math.max(1, Math.min(6, s.scale + delta));
+    const ratio = newScale / s.scale;
+    s.tx = mx - ratio * (mx - s.tx);
+    s.ty = my - ratio * (my - s.ty);
+    s.scale = newScale;
+    clamp(id);
+    applyTransform(id);
+  }, { passive: false });
+}
+
+// ── Upload ──
+function setupUpload(id) {
+  const input = document.getElementById('input-' + id);
+  input.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = document.getElementById('img-' + id);
+    img.src = url;
+
+    // show zoom wrapper, controls; hide empty + upload trigger
+    document.getElementById('zoom-' + id).classList.add('visible');
+    document.getElementById('zc-' + id).classList.add('visible');
+    document.getElementById('empty-' + id).style.display = 'none';
+    document.getElementById('trigger-' + id).classList.add('hidden');
+
+    // reset zoom state
+    zoomReset(id);
+  });
+}
+
+setupUpload('before');
+setupUpload('after');
+attachZoom('before');
+attachZoom('after');
+
+// ── Layout toggle ──
+function setLayout(mode) {
+  document.getElementById('photo-container').className =
+    mode === 'side' ? 'layout-side' : 'layout-stacked';
+  document.getElementById('btn-stacked').classList.toggle('active', mode === 'stacked');
+  document.getElementById('btn-side').classList.toggle('active', mode === 'side');
+}
 </script>
 </body>
 </html>
