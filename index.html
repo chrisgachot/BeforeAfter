@@ -100,6 +100,64 @@
   /* Fit mode: contain instead of cover, panel bg shows as letterbox bars */
   body.fit-mode .zoom-wrapper img { object-fit: contain; }
 
+  /* ── Options bar ── */
+  #options-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 7px;
+    background: #0f0f0f;
+    gap: 8px;
+    touch-action: manipulation;
+  }
+  #code-input {
+    flex: 1;
+    height: 28px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 20px;
+    color: #ccc;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0 12px;
+    outline: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 0;
+  }
+  #code-input::placeholder { color: #444; }
+  #code-input:focus { border-color: #444; }
+  #sep-btns {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .sep-btn {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.18s;
+    touch-action: manipulation;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sep-btn svg { width: 12px; height: 12px; }
+  #sep-black { background: #111; }
+  #sep-white { background: #333; }
+  .sep-btn.active { outline: 2px solid #666; outline-offset: 1px; }
+
+  /* ── Separator live preview ── */
+  .layout-stacked .panel--before { border-bottom: 1px solid #111; }
+  .layout-side    .panel--before { border-right:  1px solid #111; }
+  body.sep-black .layout-stacked .panel--before { border-bottom: 6px solid #000; }
+  body.sep-black .layout-side    .panel--before { border-right:  6px solid #000; }
+  body.sep-white .layout-stacked .panel--before { border-bottom: 6px solid #fff; }
+  body.sep-white .layout-side    .panel--before { border-right:  6px solid #fff; }
+
   /* ── Container ── */
   #photo-container {
     flex: 1;
@@ -118,9 +176,6 @@
     min-width: 0;
     min-height: 0;
   }
-  .layout-stacked .panel--before { border-bottom: 1px solid #000; }
-  .layout-side    .panel--before { border-right:  1px solid #000; }
-
   /* ── Label ── */
   .label {
     position: absolute;
@@ -231,6 +286,25 @@
       <path d="M4 7H2v8h12V7h-2"/>
     </svg>
   </button>
+</div>
+
+<div id="options-bar">
+  <input type="text" id="code-input" placeholder="Property code…" maxlength="20"
+         autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+  <div id="sep-btns">
+    <!-- Black separator -->
+    <button class="sep-btn" id="sep-black" onclick="setSep('black')" title="Black separator">
+      <svg viewBox="0 0 12 12" fill="none">
+        <rect x="0" y="5" width="12" height="2" fill="#000"/>
+      </svg>
+    </button>
+    <!-- White separator -->
+    <button class="sep-btn" id="sep-white" onclick="setSep('white')" title="White separator">
+      <svg viewBox="0 0 12 12" fill="none">
+        <rect x="0" y="5" width="12" height="2" fill="#fff"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <div id="photo-container" class="layout-side">
@@ -472,6 +546,28 @@ function setLayout(mode) {
 }
 
 // ═══════════════════════════════════════════════════
+// SEPARATOR TOGGLE
+// ═══════════════════════════════════════════════════
+
+let sepColor = 'none'; // 'none' | 'black' | 'white'
+
+function setSep(color) {
+  if (sepColor === color) {
+    // Tap active button → turn off
+    sepColor = 'none';
+    document.body.classList.remove('sep-black', 'sep-white');
+    document.getElementById('sep-black').classList.remove('active');
+    document.getElementById('sep-white').classList.remove('active');
+  } else {
+    sepColor = color;
+    document.body.classList.toggle('sep-black', color === 'black');
+    document.body.classList.toggle('sep-white', color === 'white');
+    document.getElementById('sep-black').classList.toggle('active', color === 'black');
+    document.getElementById('sep-white').classList.toggle('active', color === 'white');
+  }
+}
+
+// ═══════════════════════════════════════════════════
 // FIT / FILL TOGGLE
 // ═══════════════════════════════════════════════════
 
@@ -561,10 +657,28 @@ function shareComparison() {
     ctx.fillText(id.toUpperCase(), lx + 11, ly + lh / 2);
   });
 
-  // Divider
-  ctx.fillStyle = '#000';
-  if (isSide) ctx.fillRect(cw / 2, 0, 1, ch);
-  else        ctx.fillRect(0, ch / 2, cw, 1);
+  // ── Separator line ──
+  const SEP_W  = sepColor === 'none' ? 1 : 6;
+  const SEP_COL = sepColor === 'white' ? '#fff' : '#000';
+  ctx.fillStyle = SEP_COL;
+  if (isSide) ctx.fillRect(Math.round(cw / 2 - SEP_W / 2), 0, SEP_W, ch);
+  else        ctx.fillRect(0, Math.round(ch / 2 - SEP_W / 2), cw, SEP_W);
+
+  // ── Property code label ──
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  if (code) {
+    ctx.font = 'bold 13px "DM Mono", monospace';
+    const tw  = ctx.measureText(code).width;
+    const lw  = tw + 28, lh = 28, lr = 14;
+    const lx  = (cw - lw) / 2, ly = 12;
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.beginPath();
+    ctx.roundRect(lx, ly, lw, lh, lr);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(code, lx + 14, ly + lh / 2);
+  }
 
   // iOS: share sheet → Save Image → Photos
   // Desktop: fallback to file download
