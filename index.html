@@ -10,15 +10,12 @@
 <title>Before & After</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@500;600&display=swap');
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body {
     width: 100%; height: 100%; height: 100dvh;
     overflow: hidden;
     background: #0f0f0f;
   }
-
   body {
     display: flex;
     flex-direction: column;
@@ -35,7 +32,6 @@
     background: #0f0f0f;
     gap: 6px;
   }
-
   .toggle-btn {
     display: flex;
     align-items: center;
@@ -73,9 +69,7 @@
     background: #1a1a1a;
     min-width: 0;
     min-height: 0;
-    /* no cursor:pointer — handled by children */
   }
-
   .layout-stacked .panel--before { border-bottom: 1px solid #000; }
   .layout-side    .panel--before { border-right:  1px solid #000; }
 
@@ -98,17 +92,16 @@
   .panel--after  .label { background: #3ab88a; color: #fff; }
   .layout-side .label { font-size: 9px; padding: 4px 8px; letter-spacing: 0.10em; }
 
-  /* ── Zoom controls ── */
+  /* ── Zoom + Crop controls ── */
   .zoom-controls {
     position: absolute;
     bottom: 10px; right: 10px;
     z-index: 20;
-    display: none; /* shown once photo loaded */
+    display: none;
     flex-direction: column;
     gap: 4px;
   }
   .zoom-controls.visible { display: flex; }
-
   .zoom-btn {
     width: 30px; height: 30px;
     border-radius: 8px;
@@ -127,6 +120,102 @@
   }
   .zoom-btn:active { background: rgba(255,255,255,0.15); }
 
+  /* ── Crop button ── */
+  .crop-btn-wrap {
+    position: absolute;
+    bottom: 10px; left: 10px;
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .crop-btn-wrap.visible { display: flex; }
+  .crop-btn {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    font-family: 'DM Mono', monospace;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .crop-btn:active { background: rgba(255,255,255,0.15); }
+  .crop-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
+
+  /* ── Crop mode overlay ── */
+  .crop-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    display: none;
+  }
+  .crop-overlay.active { display: block; }
+  /* dim outside crop box */
+  .crop-shade {
+    position: absolute;
+    background: rgba(0,0,0,0.45);
+    pointer-events: none;
+  }
+  /* crop box border */
+  .crop-box {
+    position: absolute;
+    border: 2px solid rgba(255,255,255,0.85);
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+    pointer-events: none;
+  }
+  /* corner handles */
+  .crop-handle {
+    position: absolute;
+    width: 18px; height: 18px;
+    background: #fff;
+    border-radius: 3px;
+    pointer-events: all;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .crop-handle.tl { top: -2px; left: -2px; cursor: nwse-resize; }
+  .crop-handle.tr { top: -2px; right: -2px; cursor: nesw-resize; }
+  .crop-handle.bl { bottom: -2px; left: -2px; cursor: nesw-resize; }
+  .crop-handle.br { bottom: -2px; right: -2px; cursor: nwse-resize; }
+
+  /* ── Crop toolbar ── */
+  .crop-toolbar {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    display: none;
+    gap: 6px;
+  }
+  .crop-toolbar.active { display: flex; }
+  .ct-btn {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 20px;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ct-btn.cancel { background: rgba(255,255,255,0.12); color: #aaa; }
+  .ct-btn.apply  { background: #fff; color: #000; font-weight: 600; }
+  .ct-btn:active { opacity: 0.75; }
+
   /* ── Empty state ── */
   .empty {
     position: absolute;
@@ -143,7 +232,7 @@
   .empty svg { width: 34px; height: 34px; }
   .empty-text { font-size: 11px; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
 
-  /* ── Upload trigger (only visible when no photo) ── */
+  /* ── Upload trigger ── */
   .upload-trigger {
     position: absolute;
     inset: 0;
@@ -158,7 +247,6 @@
     width: 100%; height: 100%;
     cursor: pointer;
   }
-  /* hide upload trigger once photo is loaded */
   .upload-trigger.hidden { display: none; }
 
   /* ── Zoomable image wrapper ── */
@@ -166,11 +254,10 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
-    display: none; /* shown once photo loaded */
-    touch-action: none; /* we handle all touch ourselves */
+    display: none;
+    touch-action: none;
   }
   .zoom-wrapper.visible { display: block; }
-
   .zoom-wrapper img {
     position: absolute;
     top: 0; left: 0;
@@ -185,7 +272,6 @@
 </style>
 </head>
 <body>
-
 <div id="toolbar">
   <button class="toggle-btn active" id="btn-stacked" onclick="setLayout('stacked')">
     <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
@@ -227,6 +313,28 @@
       <button class="zoom-btn" onclick="zoomStep('before', -0.3)">−</button>
       <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('before')">↺</button>
     </div>
+    <!-- Crop button (bottom-left) -->
+    <div class="crop-btn-wrap" id="cb-before">
+      <button class="crop-btn" onclick="enterCropMode('before')">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M3 1v8h8M1 3h8v8"/>
+        </svg>
+        Crop
+      </button>
+    </div>
+    <!-- Crop overlay -->
+    <div class="crop-overlay" id="co-before">
+      <div class="crop-box" id="cbox-before">
+        <div class="crop-handle tl" data-corner="tl" data-panel="before"></div>
+        <div class="crop-handle tr" data-corner="tr" data-panel="before"></div>
+        <div class="crop-handle bl" data-corner="bl" data-panel="before"></div>
+        <div class="crop-handle br" data-corner="br" data-panel="before"></div>
+      </div>
+    </div>
+    <div class="crop-toolbar" id="ct-before">
+      <button class="ct-btn cancel" onclick="exitCropMode('before')">Cancel</button>
+      <button class="ct-btn apply"  onclick="applyCrop('before')">Apply Crop</button>
+    </div>
   </div>
 
   <!-- AFTER -->
@@ -251,52 +359,67 @@
       <button class="zoom-btn" onclick="zoomStep('after', -0.3)">−</button>
       <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('after')">↺</button>
     </div>
+    <!-- Crop button (bottom-left) -->
+    <div class="crop-btn-wrap" id="cb-after">
+      <button class="crop-btn" onclick="enterCropMode('after')">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
+          <path d="M3 1v8h8M1 3h8v8"/>
+        </svg>
+        Crop
+      </button>
+    </div>
+    <!-- Crop overlay -->
+    <div class="crop-overlay" id="co-after">
+      <div class="crop-box" id="cbox-after">
+        <div class="crop-handle tl" data-corner="tl" data-panel="after"></div>
+        <div class="crop-handle tr" data-corner="tr" data-panel="after"></div>
+        <div class="crop-handle bl" data-corner="bl" data-panel="after"></div>
+        <div class="crop-handle br" data-corner="br" data-panel="after"></div>
+      </div>
+    </div>
+    <div class="crop-toolbar" id="ct-after">
+      <button class="ct-btn cancel" onclick="exitCropMode('after')">Cancel</button>
+      <button class="ct-btn apply"  onclick="applyCrop('after')">Apply Crop</button>
+    </div>
   </div>
 
 </div>
 
 <script>
-// ── State per panel ──
+// ── Zoom state ──
 const state = {
   before: { scale: 1, tx: 0, ty: 0 },
   after:  { scale: 1, tx: 0, ty: 0 }
 };
 
-// ── Apply transform ──
+// ── Crop state (panel coords, % of panel) ──
+const cropState = {
+  before: { x: 0.1, y: 0.1, w: 0.8, h: 0.8 },
+  after:  { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }
+};
+
+// ── Apply zoom transform ──
 function applyTransform(id) {
   const { scale, tx, ty } = state[id];
-  const img = document.getElementById('img-' + id);
-  img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  document.getElementById('img-' + id).style.transform =
+    `translate(${tx}px, ${ty}px) scale(${scale})`;
 }
 
-// ── Clamp pan so image doesn't leave panel ──
+// ── Clamp pan ──
 function clamp(id) {
   const s = state[id];
   const wrapper = document.getElementById('zoom-' + id);
-  const w = wrapper.clientWidth;
-  const h = wrapper.clientHeight;
-  const scaledW = w * s.scale;
-  const scaledH = h * s.scale;
-
-  // max pan: can't push image beyond edges
-  const maxTx = 0;
-  const minTx = w - scaledW;
-  const maxTy = 0;
-  const minTy = h - scaledH;
-
-  s.tx = Math.min(maxTx, Math.max(minTx, s.tx));
-  s.ty = Math.min(maxTy, Math.max(minTy, s.ty));
+  const w = wrapper.clientWidth, h = wrapper.clientHeight;
+  s.tx = Math.min(0, Math.max(w - w * s.scale, s.tx));
+  s.ty = Math.min(0, Math.max(h - h * s.scale, s.ty));
 }
 
-// ── Zoom step (buttons) ──
+// ── Zoom step ──
 function zoomStep(id, delta) {
   const s = state[id];
   const wrapper = document.getElementById('zoom-' + id);
-  const cx = wrapper.clientWidth / 2;
-  const cy = wrapper.clientHeight / 2;
+  const cx = wrapper.clientWidth / 2, cy = wrapper.clientHeight / 2;
   const newScale = Math.max(1, Math.min(6, s.scale + delta));
-
-  // zoom toward center
   const ratio = newScale / s.scale;
   s.tx = cx - ratio * (cx - s.tx);
   s.ty = cy - ratio * (cy - s.ty);
@@ -305,40 +428,27 @@ function zoomStep(id, delta) {
   applyTransform(id);
 }
 
-// ── Reset ──
+// ── Zoom reset ──
 function zoomReset(id) {
   state[id] = { scale: 1, tx: 0, ty: 0 };
   applyTransform(id);
 }
 
-// ── Touch / pinch / pan handler ──
+// ── Pinch / pan handler ──
 function attachZoom(id) {
   const wrapper = document.getElementById('zoom-' + id);
   const s = state[id];
-  let touches = {};
-  let lastDist = null;
-  let lastMidX = null, lastMidY = null;
-
-  function getTouches(e) {
-    return Array.from(e.touches).filter(t =>
-      wrapper.contains(e.target) || e.target === wrapper
-    );
-  }
+  let lastDist = null, lastMidX = null, lastMidY = null;
 
   wrapper.addEventListener('touchstart', e => {
     e.preventDefault();
     const ts = Array.from(e.touches);
     if (ts.length === 2) {
-      lastDist = Math.hypot(
-        ts[1].clientX - ts[0].clientX,
-        ts[1].clientY - ts[0].clientY
-      );
+      lastDist = Math.hypot(ts[1].clientX - ts[0].clientX, ts[1].clientY - ts[0].clientY);
       lastMidX = (ts[0].clientX + ts[1].clientX) / 2;
       lastMidY = (ts[0].clientY + ts[1].clientY) / 2;
     } else if (ts.length === 1) {
-      lastMidX = ts[0].clientX;
-      lastMidY = ts[0].clientY;
-      lastDist = null;
+      lastMidX = ts[0].clientX; lastMidY = ts[0].clientY; lastDist = null;
     }
   }, { passive: false });
 
@@ -346,105 +456,225 @@ function attachZoom(id) {
     e.preventDefault();
     const ts = Array.from(e.touches);
     const rect = wrapper.getBoundingClientRect();
-
     if (ts.length === 2) {
-      // Pinch zoom
-      const dist = Math.hypot(
-        ts[1].clientX - ts[0].clientX,
-        ts[1].clientY - ts[0].clientY
-      );
+      const dist = Math.hypot(ts[1].clientX - ts[0].clientX, ts[1].clientY - ts[0].clientY);
       const midX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
       const midY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
-
       if (lastDist !== null) {
         const ratio = dist / lastDist;
         const newScale = Math.max(1, Math.min(6, s.scale * ratio));
         const scaleRatio = newScale / s.scale;
-
-        // zoom toward pinch midpoint
         s.tx = midX - scaleRatio * (midX - s.tx);
         s.ty = midY - scaleRatio * (midY - s.ty);
         s.scale = newScale;
-
-        // also pan by midpoint delta
-        if (lastMidX !== null) {
-          s.tx += midX - lastMidX;
-          s.ty += midY - lastMidY;
-        }
+        if (lastMidX !== null) { s.tx += midX - lastMidX; s.ty += midY - lastMidY; }
       }
-
-      lastDist = dist;
-      lastMidX = midX;
-      lastMidY = midY;
-
+      lastDist = dist; lastMidX = midX; lastMidY = midY;
     } else if (ts.length === 1 && s.scale > 1) {
-      // Single finger pan (only when zoomed)
-      const cx = ts[0].clientX - rect.left;
-      const cy = ts[0].clientY - rect.top;
-      if (lastMidX !== null) {
-        s.tx += cx - lastMidX;
-        s.ty += cy - lastMidY;
-      }
-      lastMidX = cx;
-      lastMidY = cy;
+      const cx = ts[0].clientX - rect.left, cy = ts[0].clientY - rect.top;
+      if (lastMidX !== null) { s.tx += cx - lastMidX; s.ty += cy - lastMidY; }
+      lastMidX = cx; lastMidY = cy;
     }
-
-    clamp(id);
-    applyTransform(id);
+    clamp(id); applyTransform(id);
   }, { passive: false });
 
   wrapper.addEventListener('touchend', e => {
     const ts = Array.from(e.touches);
     if (ts.length < 2) lastDist = null;
-    if (ts.length === 1) {
-      lastMidX = ts[0].clientX;
-      lastMidY = ts[0].clientY;
-    }
+    if (ts.length === 1) { lastMidX = ts[0].clientX; lastMidY = ts[0].clientY; }
     if (ts.length === 0) { lastMidX = null; lastMidY = null; }
   }, { passive: false });
 
-  // Mouse wheel zoom (desktop)
   wrapper.addEventListener('wheel', e => {
     e.preventDefault();
     const rect = wrapper.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     const delta = e.deltaY > 0 ? -0.15 : 0.15;
     const newScale = Math.max(1, Math.min(6, s.scale + delta));
     const ratio = newScale / s.scale;
     s.tx = mx - ratio * (mx - s.tx);
     s.ty = my - ratio * (my - s.ty);
     s.scale = newScale;
-    clamp(id);
-    applyTransform(id);
+    clamp(id); applyTransform(id);
   }, { passive: false });
 }
 
 // ── Upload ──
 function setupUpload(id) {
-  const input = document.getElementById('input-' + id);
-  input.addEventListener('change', e => {
+  document.getElementById('input-' + id).addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     const img = document.getElementById('img-' + id);
     img.src = url;
-
-    // show zoom wrapper, controls; hide empty + upload trigger
     document.getElementById('zoom-' + id).classList.add('visible');
     document.getElementById('zc-' + id).classList.add('visible');
+    document.getElementById('cb-' + id).classList.add('visible');
     document.getElementById('empty-' + id).style.display = 'none';
     document.getElementById('trigger-' + id).classList.add('hidden');
-
-    // reset zoom state
     zoomReset(id);
   });
 }
 
-setupUpload('before');
-setupUpload('after');
-attachZoom('before');
-attachZoom('after');
+setupUpload('before'); setupUpload('after');
+attachZoom('before');  attachZoom('after');
+
+// ─────────────────────────────────────────
+// ── CROP MODE ──
+// ─────────────────────────────────────────
+
+function enterCropMode(id) {
+  // Reset crop box to a centered inset
+  cropState[id] = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
+  updateCropBox(id);
+  document.getElementById('co-' + id).classList.add('active');
+  document.getElementById('ct-' + id).classList.add('active');
+  // Disable zoom wrapper touch during crop
+  document.getElementById('zoom-' + id).style.pointerEvents = 'none';
+}
+
+function exitCropMode(id) {
+  document.getElementById('co-' + id).classList.remove('active');
+  document.getElementById('ct-' + id).classList.remove('active');
+  document.getElementById('zoom-' + id).style.pointerEvents = '';
+}
+
+function updateCropBox(id) {
+  const panel  = document.getElementById('panel-' + id);
+  const box    = document.getElementById('cbox-' + id);
+  const c      = cropState[id];
+  const pw     = panel.clientWidth;
+  const ph     = panel.clientHeight;
+  box.style.left   = (c.x * pw) + 'px';
+  box.style.top    = (c.y * ph) + 'px';
+  box.style.width  = (c.w * pw) + 'px';
+  box.style.height = (c.h * ph) + 'px';
+}
+
+// Handle dragging of crop corners
+(function attachCropHandles() {
+  document.querySelectorAll('.crop-handle').forEach(handle => {
+    const corner = handle.dataset.corner;
+    const panelId = handle.dataset.panel;
+    let startX, startY, startC;
+
+    function onStart(clientX, clientY) {
+      startX = clientX; startY = clientY;
+      startC = { ...cropState[panelId] };
+    }
+    function onMove(clientX, clientY) {
+      const panel = document.getElementById('panel-' + panelId);
+      const pw = panel.clientWidth, ph = panel.clientHeight;
+      const dx = (clientX - startX) / pw;
+      const dy = (clientY - startY) / ph;
+      const c = cropState[panelId];
+      const MIN = 0.1;
+
+      if (corner === 'tl') {
+        c.x = Math.max(0, Math.min(startC.x + dx, startC.x + startC.w - MIN));
+        c.y = Math.max(0, Math.min(startC.y + dy, startC.y + startC.h - MIN));
+        c.w = startC.w - (c.x - startC.x);
+        c.h = startC.h - (c.y - startC.y);
+      } else if (corner === 'tr') {
+        c.y = Math.max(0, Math.min(startC.y + dy, startC.y + startC.h - MIN));
+        c.w = Math.max(MIN, Math.min(startC.w + dx, 1 - startC.x));
+        c.h = startC.h - (c.y - startC.y);
+      } else if (corner === 'bl') {
+        c.x = Math.max(0, Math.min(startC.x + dx, startC.x + startC.w - MIN));
+        c.w = startC.w - (c.x - startC.x);
+        c.h = Math.max(MIN, Math.min(startC.h + dy, 1 - startC.y));
+      } else if (corner === 'br') {
+        c.w = Math.max(MIN, Math.min(startC.w + dx, 1 - startC.x));
+        c.h = Math.max(MIN, Math.min(startC.h + dy, 1 - startC.y));
+      }
+      updateCropBox(panelId);
+    }
+
+    // Touch
+    handle.addEventListener('touchstart', e => {
+      e.preventDefault(); e.stopPropagation();
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: false });
+    handle.addEventListener('touchmove', e => {
+      e.preventDefault(); e.stopPropagation();
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: false });
+
+    // Mouse
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      onStart(e.clientX, e.clientY);
+      function onMM(ev) { onMove(ev.clientX, ev.clientY); }
+      function onMU()   { document.removeEventListener('mousemove', onMM); document.removeEventListener('mouseup', onMU); }
+      document.addEventListener('mousemove', onMM);
+      document.addEventListener('mouseup',   onMU);
+    });
+  });
+})();
+
+// ── Apply crop using canvas ──
+function applyCrop(id) {
+  const panel   = document.getElementById('panel-' + id);
+  const img     = document.getElementById('img-' + id);
+  const c       = cropState[id];
+  const s       = state[id];
+  const pw      = panel.clientWidth;
+  const ph      = panel.clientHeight;
+
+  // Crop box in panel pixels
+  const cropX = c.x * pw;
+  const cropY = c.y * ph;
+  const cropW = c.w * pw;
+  const cropH = c.h * ph;
+
+  // Map panel pixels → image source pixels
+  // The image is rendered as: transform = translate(tx,ty) scale(scale)
+  // covering the full panel (object-fit: cover)
+  // Natural image size
+  const natW = img.naturalWidth;
+  const natH = img.naturalHeight;
+
+  // Cover scale: the CSS scale that makes the image fill the panel
+  const coverScale = Math.max(pw / natW, ph / natH);
+
+  // Rendered image size (before zoom transform)
+  const rendW = natW * coverScale;
+  const rendH = natH * coverScale;
+
+  // Offset to center the covered image (object-fit: cover aligns center)
+  const offX = (pw - rendW) / 2;
+  const offY = (ph - rendH) / 2;
+
+  // Total transform: image pixel at panel position (px, py) is:
+  //   imgX = (px - tx - offX) / (coverScale * scale)
+  //   imgY = (py - ty - offY) / (coverScale * scale)
+  const totalScale = coverScale * s.scale;
+
+  const srcX = (cropX - s.tx - offX) / totalScale;
+  const srcY = (cropY - s.ty - offY) / totalScale;
+  const srcW = cropW / totalScale;
+  const srcH = cropH / totalScale;
+
+  // Clamp to image bounds
+  const clampedSrcX = Math.max(0, srcX);
+  const clampedSrcY = Math.max(0, srcY);
+  const clampedSrcW = Math.min(srcW, natW - clampedSrcX);
+  const clampedSrcH = Math.min(srcH, natH - clampedSrcY);
+
+  // Draw onto canvas
+  const canvas = document.createElement('canvas');
+  canvas.width  = Math.round(clampedSrcW);
+  canvas.height = Math.round(clampedSrcH);
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, clampedSrcX, clampedSrcY, clampedSrcW, clampedSrcH,
+                     0, 0, canvas.width, canvas.height);
+
+  img.src = canvas.toDataURL('image/jpeg', 0.95);
+  zoomReset(id);
+  exitCropMode(id);
+}
 
 // ── Layout toggle ──
 function setLayout(mode) {
