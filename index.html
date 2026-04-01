@@ -13,12 +13,11 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Prevent the browser from ever pinch-zooming the page itself */
   html, body {
     width: 100%; height: 100%; height: 100dvh;
     overflow: hidden;
     background: #0f0f0f;
-    touch-action: none;   /* page-level pinch zoom disabled */
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
@@ -37,10 +36,9 @@
     justify-content: space-between;
     padding: 8px 10px 6px;
     background: #0f0f0f;
-    gap: 6px;
     touch-action: manipulation;
   }
-  #toolbar-left, #toolbar-right {
+  #toolbar-left {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -66,8 +64,8 @@
   .toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
   .toggle-btn.active { background: #1e1e1e; border-color: #444; color: #ccc; }
 
-  /* ── Icon-only toolbar buttons ── */
-  .icon-btn {
+  /* ── Share button ── */
+  #btn-share {
     width: 32px; height: 32px;
     border-radius: 20px;
     border: 1px solid #2a2a2a;
@@ -78,14 +76,9 @@
     -webkit-tap-highlight-color: transparent;
     transition: all 0.18s;
     touch-action: manipulation;
-    flex-shrink: 0;
   }
-  .icon-btn svg { width: 14px; height: 14px; }
-  .icon-btn:active, .icon-btn.active { background: #1e1e1e; border-color: #444; color: #ccc; }
-
-  /* ── Hide controls mode ── */
-  body.ui-hidden .zoom-controls,
-  body.ui-hidden .crop-btn-wrap { display: none !important; }
+  #btn-share svg { width: 14px; height: 14px; }
+  #btn-share:active { background: #1e1e1e; border-color: #444; color: #ccc; }
 
   /* ── Container ── */
   #photo-container {
@@ -127,122 +120,6 @@
   .panel--after  .label { background: #3ab88a; color: #fff; }
   .layout-side .label { font-size: 9px; padding: 4px 8px; letter-spacing: 0.10em; }
 
-  /* ── Zoom controls ── */
-  .zoom-controls {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    z-index: 20;
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .zoom-controls.visible { display: flex; }
-  .zoom-btn {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    border: none;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-size: 18px;
-    line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    font-family: 'DM Mono', monospace;
-    touch-action: manipulation;
-  }
-  .zoom-btn:active { background: rgba(255,255,255,0.15); }
-
-  /* ── Crop button (bottom-left) ── */
-  .crop-btn-wrap {
-    position: absolute;
-    bottom: 10px; left: 10px;
-    z-index: 20;
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .crop-btn-wrap.visible { display: flex; }
-  .crop-btn {
-    height: 30px;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: none;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    display: flex; align-items: center; gap: 5px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    font-family: 'DM Mono', monospace;
-    white-space: nowrap;
-    touch-action: manipulation;
-  }
-  .crop-btn:active { background: rgba(255,255,255,0.15); }
-  .crop-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
-
-  /* ── Crop overlay ── */
-  .crop-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 30;
-    pointer-events: none;
-    display: none;
-  }
-  .crop-overlay.active { display: block; }
-  .crop-box {
-    position: absolute;
-    border: 2px solid rgba(255,255,255,0.85);
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
-    pointer-events: none;
-  }
-  .crop-handle {
-    position: absolute;
-    width: 22px; height: 22px;
-    background: #fff;
-    border-radius: 4px;
-    pointer-events: all;
-    touch-action: none;
-  }
-  .crop-handle.tl { top: -3px; left: -3px; cursor: nwse-resize; }
-  .crop-handle.tr { top: -3px; right: -3px; cursor: nesw-resize; }
-  .crop-handle.bl { bottom: -3px; left: -3px; cursor: nesw-resize; }
-  .crop-handle.br { bottom: -3px; right: -3px; cursor: nwse-resize; }
-
-  /* ── Crop toolbar ── */
-  .crop-toolbar {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 40;
-    display: none;
-    gap: 6px;
-  }
-  .crop-toolbar.active { display: flex; }
-  .ct-btn {
-    height: 32px;
-    padding: 0 14px;
-    border-radius: 20px;
-    border: none;
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-  .ct-btn.cancel { background: rgba(255,255,255,0.12); color: #aaa; }
-  .ct-btn.apply  { background: #fff; color: #000; font-weight: 600; }
-  .ct-btn:active { opacity: 0.75; }
-
   /* ── Empty state ── */
   .empty {
     position: absolute;
@@ -256,7 +133,11 @@
     opacity: 0.22;
   }
   .empty svg { width: 34px; height: 34px; }
-  .empty-text { font-size: 11px; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
+  .empty-text {
+    font-size: 11px; color: #fff;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.06em;
+  }
 
   /* ── Upload trigger ── */
   .upload-trigger {
@@ -282,7 +163,7 @@
     inset: 0;
     overflow: hidden;
     display: none;
-    touch-action: none; /* all gestures handled in JS */
+    touch-action: none;
   }
   .zoom-wrapper.visible { display: block; }
   .zoom-wrapper img {
@@ -316,22 +197,13 @@
       Side by Side
     </button>
   </div>
-  <div id="toolbar-right">
-    <!-- Hide/show panel controls -->
-    <button class="icon-btn" id="btn-hideui" onclick="toggleUI()" title="Hide controls">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
-        <circle cx="8" cy="8" r="2"/>
-      </svg>
-    </button>
-    <!-- Download combined image -->
-    <button class="icon-btn" id="btn-download" onclick="downloadComparison()" title="Download comparison">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M8 2v8M5 7l3 3 3-3"/>
-        <path d="M2 12h12" stroke-linecap="round"/>
-      </svg>
-    </button>
-  </div>
+  <!-- iOS share icon (box with arrow up) -->
+  <button id="btn-share" onclick="shareComparison()" title="Share">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 1v9M5 4l3-3 3 3"/>
+      <path d="M4 7H2v8h12V7h-2"/>
+    </svg>
+  </button>
 </div>
 
 <div id="photo-container" class="layout-side">
@@ -353,31 +225,6 @@
     <div class="zoom-wrapper" id="zoom-before">
       <img id="img-before" alt="Before">
     </div>
-    <div class="zoom-controls" id="zc-before">
-      <button class="zoom-btn" onclick="zoomStep('before', 0.3)">+</button>
-      <button class="zoom-btn" onclick="zoomStep('before', -0.3)">−</button>
-      <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('before')">↺</button>
-    </div>
-    <div class="crop-btn-wrap" id="cb-before">
-      <button class="crop-btn" onclick="enterCropMode('before')">
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
-          <path d="M3 1v8h8M1 3h8v8"/>
-        </svg>
-        Crop
-      </button>
-    </div>
-    <div class="crop-overlay" id="co-before">
-      <div class="crop-box" id="cbox-before">
-        <div class="crop-handle tl" data-corner="tl" data-panel="before"></div>
-        <div class="crop-handle tr" data-corner="tr" data-panel="before"></div>
-        <div class="crop-handle bl" data-corner="bl" data-panel="before"></div>
-        <div class="crop-handle br" data-corner="br" data-panel="before"></div>
-      </div>
-    </div>
-    <div class="crop-toolbar" id="ct-before">
-      <button class="ct-btn cancel" onclick="exitCropMode('before')">Cancel</button>
-      <button class="ct-btn apply"  onclick="applyCrop('before')">Apply Crop</button>
-    </div>
   </div>
 
   <!-- AFTER -->
@@ -397,58 +244,30 @@
     <div class="zoom-wrapper" id="zoom-after">
       <img id="img-after" alt="After">
     </div>
-    <div class="zoom-controls" id="zc-after">
-      <button class="zoom-btn" onclick="zoomStep('after', 0.3)">+</button>
-      <button class="zoom-btn" onclick="zoomStep('after', -0.3)">−</button>
-      <button class="zoom-btn" style="font-size:13px" onclick="zoomReset('after')">↺</button>
-    </div>
-    <div class="crop-btn-wrap" id="cb-after">
-      <button class="crop-btn" onclick="enterCropMode('after')">
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
-          <path d="M3 1v8h8M1 3h8v8"/>
-        </svg>
-        Crop
-      </button>
-    </div>
-    <div class="crop-overlay" id="co-after">
-      <div class="crop-box" id="cbox-after">
-        <div class="crop-handle tl" data-corner="tl" data-panel="after"></div>
-        <div class="crop-handle tr" data-corner="tr" data-panel="after"></div>
-        <div class="crop-handle bl" data-corner="bl" data-panel="after"></div>
-        <div class="crop-handle br" data-corner="br" data-panel="after"></div>
-      </div>
-    </div>
-    <div class="crop-toolbar" id="ct-after">
-      <button class="ct-btn cancel" onclick="exitCropMode('after')">Cancel</button>
-      <button class="ct-btn apply"  onclick="applyCrop('after')">Apply Crop</button>
-    </div>
   </div>
 
 </div>
 
 <script>
 // ═══════════════════════════════════════════════════
-// PREVENT BROWSER-LEVEL ZOOM  (comprehensive)
+// PREVENT BROWSER-LEVEL PAGE ZOOM
 // ═══════════════════════════════════════════════════
 
-// 1. Safari: proprietary gesture events
+// Safari gesture events
 document.addEventListener('gesturestart',  e => e.preventDefault(), { passive: false });
 document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
 document.addEventListener('gestureend',    e => e.preventDefault(), { passive: false });
 
-// 2. All browsers: block ALL touchmove at document level.
-//    This is the most reliable way to stop page zoom on Android Chrome,
-//    which ignores user-scalable=no since Chrome 55.
-//    Our in-element touchmove handlers still fire first (bubble order),
-//    so zoom/pan inside the panels is unaffected.
+// Block ALL touchmove at document level — most reliable way to stop
+// Android Chrome page zoom (which ignores user-scalable=no since Chrome 55)
 document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 
-// 3. Block multi-touch touchstart at document level (extra safety for iOS)
+// Block multi-touch touchstart (extra safety for iOS)
 document.addEventListener('touchstart', e => {
   if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
-// 4. Prevent double-tap zoom
+// Prevent double-tap zoom
 let _lastTap = 0;
 document.addEventListener('touchend', e => {
   const now = Date.now();
@@ -456,13 +275,13 @@ document.addEventListener('touchend', e => {
   _lastTap = now;
 }, { passive: false });
 
-// 5. Desktop: block ctrl+scroll page zoom
+// Desktop ctrl+scroll zoom
 document.addEventListener('wheel', e => {
   if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
 
 // ═══════════════════════════════════════════════════
-// ZOOM STATE  (always read via state[id], never cache reference)
+// ZOOM STATE
 // ═══════════════════════════════════════════════════
 
 const state = {
@@ -480,11 +299,10 @@ function clampState(id) {
   const s = state[id];
   const wrapper = document.getElementById('zoom-' + id);
   const w = wrapper.clientWidth, h = wrapper.clientHeight;
-  s.tx = Math.min(0, Math.max(w  - w  * s.scale, s.tx));
-  s.ty = Math.min(0, Math.max(h  - h  * s.scale, s.ty));
+  s.tx = Math.min(0, Math.max(w - w * s.scale, s.tx));
+  s.ty = Math.min(0, Math.max(h - h * s.scale, s.ty));
 }
 
-// Zoom toward a panel-space point (px, py)
 function zoomToward(id, px, py, newScale) {
   const s = state[id];
   newScale = Math.max(1, Math.min(8, newScale));
@@ -496,38 +314,23 @@ function zoomToward(id, px, py, newScale) {
   applyTransform(id);
 }
 
-function zoomStep(id, delta) {
-  const wrapper = document.getElementById('zoom-' + id);
-  const cx = wrapper.clientWidth / 2, cy = wrapper.clientHeight / 2;
-  zoomToward(id, cx, cy, state[id].scale + delta);
-}
-
 function zoomReset(id) {
   state[id] = { scale: 1, tx: 0, ty: 0 };
   applyTransform(id);
 }
 
 // ═══════════════════════════════════════════════════
-// PINCH-TO-ZOOM + PAN  (Touch Events — most reliable on mobile)
+// PINCH-TO-ZOOM + PAN  (Touch Events)
 // ═══════════════════════════════════════════════════
 
 function attachZoom(id) {
   const wrapper = document.getElementById('zoom-' + id);
-
-  // Track previous gesture state in panel-relative coords
   let lastMidX = null, lastMidY = null, lastDist = null;
 
-  function readTouches(e) {
-    // Always use e.touches (all current touches), not changedTouches
-    const rect = wrapper.getBoundingClientRect();
-    const ts = Array.from(e.touches);
-    return { ts, rect };
-  }
-
-  // ── touchstart: snapshot starting position ──
   wrapper.addEventListener('touchstart', e => {
     e.preventDefault();
-    const { ts, rect } = readTouches(e);
+    const ts = Array.from(e.touches);
+    const rect = wrapper.getBoundingClientRect();
     if (ts.length >= 2) {
       lastMidX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
       lastMidY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
@@ -539,41 +342,32 @@ function attachZoom(id) {
     }
   }, { passive: false });
 
-  // ── touchmove: pan + pinch ──
   wrapper.addEventListener('touchmove', e => {
     e.preventDefault();
-    const { ts, rect } = readTouches(e);
+    const ts = Array.from(e.touches);
+    const rect = wrapper.getBoundingClientRect();
     const s = state[id];
 
     if (ts.length >= 2) {
-      // ── Two fingers: pinch-zoom + pan simultaneously ──
       const midX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
       const midY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
       const dist = Math.hypot(ts[1].clientX - ts[0].clientX, ts[1].clientY - ts[0].clientY);
 
       if (lastDist !== null && lastMidX !== null) {
-        // Scale toward pinch midpoint
-        const ratio    = dist / lastDist;
-        const newScale = Math.max(1, Math.min(8, s.scale * ratio));
-        const ar       = newScale / s.scale;
+        const newScale = Math.max(1, Math.min(8, s.scale * (dist / lastDist)));
+        const ar = newScale / s.scale;
         s.tx = midX - ar * (midX - s.tx);
         s.ty = midY - ar * (midY - s.ty);
         s.scale = newScale;
-        // Pan by midpoint movement (after scaling)
         s.tx += midX - lastMidX;
         s.ty += midY - lastMidY;
       }
-
       lastMidX = midX; lastMidY = midY; lastDist = dist;
 
     } else if (ts.length === 1) {
-      // ── One finger: pan (works at any zoom level; clamp prevents over-scroll at 1×) ──
       const cx = ts[0].clientX - rect.left;
       const cy = ts[0].clientY - rect.top;
-      if (lastMidX !== null) {
-        s.tx += cx - lastMidX;
-        s.ty += cy - lastMidY;
-      }
+      if (lastMidX !== null) { s.tx += cx - lastMidX; s.ty += cy - lastMidY; }
       lastMidX = cx; lastMidY = cy; lastDist = null;
     }
 
@@ -581,14 +375,12 @@ function attachZoom(id) {
     applyTransform(id);
   }, { passive: false });
 
-  // ── touchend: transition cleanly between finger counts ──
   wrapper.addEventListener('touchend', e => {
-    const { ts, rect } = readTouches(e);
+    const ts = Array.from(e.touches);
+    const rect = wrapper.getBoundingClientRect();
     if (ts.length === 0) {
       lastMidX = null; lastMidY = null; lastDist = null;
     } else if (ts.length === 1) {
-      // One finger remains after lifting the other — reset reference point
-      // so the first move event doesn't cause a jump
       lastMidX = ts[0].clientX - rect.left;
       lastMidY = ts[0].clientY - rect.top;
       lastDist = null;
@@ -597,28 +389,26 @@ function attachZoom(id) {
 
   wrapper.addEventListener('touchcancel', () => {
     lastMidX = null; lastMidY = null; lastDist = null;
-  }, { passive: false });
+  });
 
-  // ── Mouse drag (desktop pan) ──
-  let mouseDragging = false, mousePrevX, mousePrevY;
+  // Mouse drag (desktop)
+  let dragging = false, dragX, dragY;
   wrapper.addEventListener('mousedown', e => {
-    mouseDragging = true; mousePrevX = e.clientX; mousePrevY = e.clientY;
-    e.preventDefault();
+    dragging = true; dragX = e.clientX; dragY = e.clientY; e.preventDefault();
   });
   wrapper.addEventListener('mousemove', e => {
-    if (!mouseDragging) return;
+    if (!dragging) return;
     const s = state[id];
-    s.tx += e.clientX - mousePrevX;
-    s.ty += e.clientY - mousePrevY;
-    mousePrevX = e.clientX; mousePrevY = e.clientY;
+    s.tx += e.clientX - dragX; s.ty += e.clientY - dragY;
+    dragX = e.clientX; dragY = e.clientY;
     clampState(id); applyTransform(id);
   });
-  window.addEventListener('mouseup', () => { mouseDragging = false; });
+  window.addEventListener('mouseup', () => { dragging = false; });
 
-  // ── Mouse-wheel zoom (desktop) ──
+  // Mouse-wheel zoom (desktop)
   wrapper.addEventListener('wheel', e => {
     e.preventDefault();
-    const rect  = wrapper.getBoundingClientRect();
+    const rect = wrapper.getBoundingClientRect();
     zoomToward(id, e.clientX - rect.left, e.clientY - rect.top,
                state[id].scale + (e.deltaY > 0 ? -0.15 : 0.15));
   }, { passive: false });
@@ -632,11 +422,8 @@ function setupUpload(id) {
   document.getElementById('input-' + id).addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    const img = document.getElementById('img-' + id);
-    img.src = URL.createObjectURL(file);
+    document.getElementById('img-' + id).src = URL.createObjectURL(file);
     document.getElementById('zoom-' + id).classList.add('visible');
-    document.getElementById('zc-' + id).classList.add('visible');
-    document.getElementById('cb-' + id).classList.add('visible');
     document.getElementById('empty-' + id).style.display = 'none';
     document.getElementById('trigger-' + id).classList.add('hidden');
     zoomReset(id);
@@ -645,146 +432,6 @@ function setupUpload(id) {
 
 setupUpload('before'); setupUpload('after');
 attachZoom('before');  attachZoom('after');
-
-// ═══════════════════════════════════════════════════
-// CROP MODE
-// ═══════════════════════════════════════════════════
-
-// Crop box position as fractions of panel size [0..1]
-const cropState = {
-  before: { x: 0.1, y: 0.1, w: 0.8, h: 0.8 },
-  after:  { x: 0.1, y: 0.1, w: 0.8, h: 0.8 }
-};
-
-function updateCropBox(id) {
-  const panel = document.getElementById('panel-' + id);
-  const box   = document.getElementById('cbox-' + id);
-  const c = cropState[id];
-  const pw = panel.clientWidth, ph = panel.clientHeight;
-  box.style.left   = (c.x * pw) + 'px';
-  box.style.top    = (c.y * ph) + 'px';
-  box.style.width  = (c.w * pw) + 'px';
-  box.style.height = (c.h * ph) + 'px';
-}
-
-function enterCropMode(id) {
-  cropState[id] = { x: 0.1, y: 0.1, w: 0.8, h: 0.8 };
-  updateCropBox(id);
-  document.getElementById('co-' + id).classList.add('active');
-  document.getElementById('ct-' + id).classList.add('active');
-  // Pause zoom interactions during crop
-  document.getElementById('zoom-' + id).style.pointerEvents = 'none';
-}
-
-function exitCropMode(id) {
-  document.getElementById('co-' + id).classList.remove('active');
-  document.getElementById('ct-' + id).classList.remove('active');
-  document.getElementById('zoom-' + id).style.pointerEvents = '';
-}
-
-// ── Corner handle dragging (Pointer Events) ──
-document.querySelectorAll('.crop-handle').forEach(handle => {
-  const corner  = handle.dataset.corner;
-  const panelId = handle.dataset.panel;
-  let startClientX, startClientY, startC;
-
-  function dragStart(clientX, clientY) {
-    startClientX = clientX;
-    startClientY = clientY;
-    startC = { ...cropState[panelId] };
-  }
-
-  function dragMove(clientX, clientY) {
-    const panel = document.getElementById('panel-' + panelId);
-    const pw = panel.clientWidth, ph = panel.clientHeight;
-    const dx = (clientX - startClientX) / pw;
-    const dy = (clientY - startClientY) / ph;
-    const c  = cropState[panelId];
-    const MIN = 0.08;
-
-    if (corner === 'tl') {
-      const nx = Math.max(0, Math.min(startC.x + dx, startC.x + startC.w - MIN));
-      const ny = Math.max(0, Math.min(startC.y + dy, startC.y + startC.h - MIN));
-      c.w = startC.w - (nx - startC.x);
-      c.h = startC.h - (ny - startC.y);
-      c.x = nx; c.y = ny;
-    } else if (corner === 'tr') {
-      const ny = Math.max(0, Math.min(startC.y + dy, startC.y + startC.h - MIN));
-      c.h = startC.h - (ny - startC.y);
-      c.y = ny;
-      c.w = Math.max(MIN, Math.min(startC.w + dx, 1 - startC.x));
-    } else if (corner === 'bl') {
-      const nx = Math.max(0, Math.min(startC.x + dx, startC.x + startC.w - MIN));
-      c.w = startC.w - (nx - startC.x);
-      c.x = nx;
-      c.h = Math.max(MIN, Math.min(startC.h + dy, 1 - startC.y));
-    } else { // br
-      c.w = Math.max(MIN, Math.min(startC.w + dx, 1 - startC.x));
-      c.h = Math.max(MIN, Math.min(startC.h + dy, 1 - startC.y));
-    }
-    updateCropBox(panelId);
-  }
-
-  // Pointer Events — works for both touch and mouse
-  handle.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    e.stopPropagation();
-    handle.setPointerCapture(e.pointerId);
-    dragStart(e.clientX, e.clientY);
-  }, { passive: false });
-
-  handle.addEventListener('pointermove', e => {
-    if (!handle.hasPointerCapture(e.pointerId)) return;
-    e.preventDefault();
-    dragMove(e.clientX, e.clientY);
-  }, { passive: false });
-});
-
-// ── Apply crop using canvas (correct object-fit:cover math) ──
-function applyCrop(id) {
-  const panel = document.getElementById('panel-' + id);
-  const img   = document.getElementById('img-' + id);
-  const c = cropState[id];
-  const s = state[id];
-  const pw = panel.clientWidth, ph = panel.clientHeight;
-
-  // Crop box in panel pixels
-  const cropX = c.x * pw, cropY = c.y * ph;
-  const cropW = c.w * pw, cropH = c.h * ph;
-
-  // object-fit:cover scale from natural size → panel size
-  const natW = img.naturalWidth, natH = img.naturalHeight;
-  const cs = Math.max(pw / natW, ph / natH);
-
-  // Where the rendered image sits inside the element before zoom transform
-  // (can be negative — image overflows the element bounds)
-  const ox = (pw - natW * cs) / 2;
-  const oy = (ph - natH * cs) / 2;
-
-  // Map panel pixel → source image pixel:
-  //   element coords:  ex = (panelX - tx) / scale
-  //   source coords:   srcX = (ex - ox) / cs
-  const srcX = ((cropX - s.tx) / s.scale - ox) / cs;
-  const srcY = ((cropY - s.ty) / s.scale - oy) / cs;
-  const srcW = cropW / (s.scale * cs);
-  const srcH = cropH / (s.scale * cs);
-
-  // Clamp to image bounds
-  const x0 = Math.max(0, Math.round(srcX));
-  const y0 = Math.max(0, Math.round(srcY));
-  const x1 = Math.min(natW, Math.round(srcX + srcW));
-  const y1 = Math.min(natH, Math.round(srcY + srcH));
-
-  const canvas = document.createElement('canvas');
-  canvas.width  = x1 - x0;
-  canvas.height = y1 - y0;
-  canvas.getContext('2d').drawImage(img, x0, y0, canvas.width, canvas.height,
-                                         0,  0, canvas.width, canvas.height);
-
-  img.src = canvas.toDataURL('image/jpeg', 0.95);
-  zoomReset(id);
-  exitCropMode(id);
-}
 
 // ═══════════════════════════════════════════════════
 // LAYOUT TOGGLE
@@ -798,36 +445,15 @@ function setLayout(mode) {
 }
 
 // ═══════════════════════════════════════════════════
-// HIDE / SHOW PANEL CONTROLS
+// SHARE / SAVE TO PHOTOS
 // ═══════════════════════════════════════════════════
 
-function toggleUI() {
-  const hidden = document.body.classList.toggle('ui-hidden');
-  const btn = document.getElementById('btn-hideui');
-  btn.classList.toggle('active', hidden);
-  // Swap icon: eye-off when hidden, eye when visible
-  btn.innerHTML = hidden
-    ? `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-         <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
-         <line x1="3" y1="3" x2="13" y2="13"/>
-       </svg>`
-    : `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-         <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
-         <circle cx="8" cy="8" r="2"/>
-       </svg>`;
-}
-
-// ═══════════════════════════════════════════════════
-// DOWNLOAD COMPARISON IMAGE
-// ═══════════════════════════════════════════════════
-
-function downloadComparison() {
+function shareComparison() {
   const container = document.getElementById('photo-container');
-  const isSide    = container.classList.contains('layout-side');
+  const isSide = container.classList.contains('layout-side');
   const cw = container.clientWidth, ch = container.clientHeight;
 
   const canvas = document.createElement('canvas');
-  // 2× for sharper output on high-DPI screens
   const DPR = Math.min(window.devicePixelRatio || 1, 3);
   canvas.width  = cw * DPR;
   canvas.height = ch * DPR;
@@ -837,39 +463,30 @@ function downloadComparison() {
   ctx.fillStyle = '#0f0f0f';
   ctx.fillRect(0, 0, cw, ch);
 
-  const ids = ['before', 'after'];
-
-  ids.forEach((id, i) => {
+  ['before', 'after'].forEach((id, i) => {
     const img = document.getElementById('img-' + id);
     if (!img || !img.naturalWidth) return;
 
     const panel = document.getElementById('panel-' + id);
     const pw = panel.clientWidth, ph = panel.clientHeight;
-    const s  = state[id];
+    const s = state[id];
     const natW = img.naturalWidth, natH = img.naturalHeight;
 
-    // object-fit:cover math (same as applyCrop)
+    // object-fit:cover offset + zoom/pan → source rectangle
     const cs = Math.max(pw / natW, ph / natH);
     const ox = (pw - natW * cs) / 2;
     const oy = (ph - natH * cs) / 2;
-
-    // Source rectangle: what's currently visible in the panel
-    const srcX = Math.max(0, ((0  - s.tx) / s.scale - ox) / cs);
-    const srcY = Math.max(0, ((0  - s.ty) / s.scale - oy) / cs);
+    const srcX = Math.max(0, ((0 - s.tx) / s.scale - ox) / cs);
+    const srcY = Math.max(0, ((0 - s.ty) / s.scale - oy) / cs);
     const srcW = Math.min(pw / (s.scale * cs), natW - srcX);
     const srcH = Math.min(ph / (s.scale * cs), natH - srcY);
 
-    // Destination rectangle on the output canvas
-    let dstX, dstY, dstW, dstH;
-    if (isSide) {
-      dstX = i === 0 ? 0 : cw / 2; dstY = 0;
-      dstW = cw / 2; dstH = ch;
-    } else {
-      dstX = 0; dstY = i === 0 ? 0 : ch / 2;
-      dstW = cw; dstH = ch / 2;
-    }
+    // Destination on canvas
+    const dstX = isSide ? (i === 0 ? 0 : cw / 2) : 0;
+    const dstY = isSide ? 0 : (i === 0 ? 0 : ch / 2);
+    const dstW = isSide ? cw / 2 : cw;
+    const dstH = isSide ? ch : ch / 2;
 
-    // Clip to destination rect before drawing (prevents overflow)
     ctx.save();
     ctx.beginPath();
     ctx.rect(dstX, dstY, dstW, dstH);
@@ -878,30 +495,39 @@ function downloadComparison() {
     ctx.restore();
 
     // Label pill
-    const labelText = id.toUpperCase();
-    const bgColor   = id === 'before' ? '#e85d3a' : '#3ab88a';
+    const bgColor = id === 'before' ? '#e85d3a' : '#3ab88a';
     ctx.font = 'bold 11px "DM Mono", monospace';
-    const tw = ctx.measureText(labelText).width;
-    const lw = tw + 22, lh = 24, lx = dstX + 10, ly = dstY + 10, lr = 12;
+    const tw = ctx.measureText(id.toUpperCase()).width;
+    const lw = tw + 22, lh = 24, lx = dstX + 10, ly = dstY + 10;
     ctx.fillStyle = bgColor;
     ctx.beginPath();
-    ctx.roundRect(lx, ly, lw, lh, lr);
+    ctx.roundRect(lx, ly, lw, lh, 12);
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.textBaseline = 'middle';
-    ctx.fillText(labelText, lx + 11, ly + lh / 2);
+    ctx.fillText(id.toUpperCase(), lx + 11, ly + lh / 2);
   });
 
-  // Divider line
+  // Divider
   ctx.fillStyle = '#000';
   if (isSide) ctx.fillRect(cw / 2, 0, 1, ch);
   else        ctx.fillRect(0, ch / 2, cw, 1);
 
-  // Trigger download
-  const a = document.createElement('a');
-  a.download = 'before-after.jpg';
-  a.href = canvas.toDataURL('image/jpeg', 0.93);
-  a.click();
+  // iOS: share sheet → Save Image → Photos
+  // Desktop: fallback to file download
+  canvas.toBlob(blob => {
+    const file = new File([blob], 'before-after.jpg', { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Before & After' }).catch(() => {});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.download = 'before-after.jpg';
+      a.href = url;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+  }, 'image/jpeg', 0.93);
 }
 </script>
 </body>
