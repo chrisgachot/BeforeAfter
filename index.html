@@ -670,7 +670,7 @@ function shareComparison() {
     ctx.font = 'bold 13px "DM Mono", monospace';
     const tw  = ctx.measureText(code).width;
     const lw  = tw + 28, lh = 28, lr = 14;
-    const lx  = (cw - lw) / 2, ly = 12;
+    const lx  = (cw - lw) / 2, ly = ch - lh - 12;
     ctx.fillStyle = 'rgba(0,0,0,0.72)';
     ctx.beginPath();
     ctx.roundRect(lx, ly, lw, lh, lr);
