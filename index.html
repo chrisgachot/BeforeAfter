@@ -80,6 +80,26 @@
   #btn-share svg { width: 14px; height: 14px; }
   #btn-share:active { background: #1e1e1e; border-color: #444; color: #ccc; }
 
+  /* ── Fit / Fill toggle ── */
+  #btn-fit {
+    width: 32px; height: 32px;
+    border-radius: 20px;
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    color: #555;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.18s;
+    touch-action: manipulation;
+    margin-right: 4px;
+  }
+  #btn-fit svg { width: 14px; height: 14px; }
+  #btn-fit.active { background: #1e1e1e; border-color: #444; color: #ccc; }
+
+  /* Fit mode: contain instead of cover, panel bg shows as letterbox bars */
+  body.fit-mode .zoom-wrapper img { object-fit: contain; }
+
   /* ── Container ── */
   #photo-container {
     flex: 1;
@@ -197,6 +217,13 @@
       Side by Side
     </button>
   </div>
+  <!-- Fit / Fill toggle -->
+  <button id="btn-fit" onclick="toggleFit()" title="Fit image (preserve aspect ratio)">
+    <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+      <rect x="1" y="1" width="12" height="12" rx="1.5"/>
+      <rect x="3.5" y="4" width="7" height="5.5" rx="0.5"/>
+    </svg>
+  </button>
   <!-- iOS share icon (box with arrow up) -->
   <button id="btn-share" onclick="shareComparison()" title="Share">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -445,6 +472,18 @@ function setLayout(mode) {
 }
 
 // ═══════════════════════════════════════════════════
+// FIT / FILL TOGGLE
+// ═══════════════════════════════════════════════════
+
+function toggleFit() {
+  const isFit = document.body.classList.toggle('fit-mode');
+  document.getElementById('btn-fit').classList.toggle('active', isFit);
+  // Reset zoom so the image recentres cleanly in the new mode
+  zoomReset('before');
+  zoomReset('after');
+}
+
+// ═══════════════════════════════════════════════════
 // SHARE / SAVE TO PHOTOS
 // ═══════════════════════════════════════════════════
 
@@ -471,15 +510,7 @@ function shareComparison() {
     const pw = panel.clientWidth, ph = panel.clientHeight;
     const s = state[id];
     const natW = img.naturalWidth, natH = img.naturalHeight;
-
-    // object-fit:cover offset + zoom/pan → source rectangle
-    const cs = Math.max(pw / natW, ph / natH);
-    const ox = (pw - natW * cs) / 2;
-    const oy = (ph - natH * cs) / 2;
-    const srcX = Math.max(0, ((0 - s.tx) / s.scale - ox) / cs);
-    const srcY = Math.max(0, ((0 - s.ty) / s.scale - oy) / cs);
-    const srcW = Math.min(pw / (s.scale * cs), natW - srcX);
-    const srcH = Math.min(ph / (s.scale * cs), natH - srcY);
+    const isFit = document.body.classList.contains('fit-mode');
 
     // Destination on canvas
     const dstX = isSide ? (i === 0 ? 0 : cw / 2) : 0;
@@ -491,7 +522,29 @@ function shareComparison() {
     ctx.beginPath();
     ctx.rect(dstX, dstY, dstW, dstH);
     ctx.clip();
-    ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
+
+    if (isFit) {
+      // Fit mode: full image with letterbox/pillarbox bars
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(dstX, dstY, dstW, dstH);
+      const fitScale = Math.min(dstW / natW, dstH / natH);
+      const fitW = natW * fitScale, fitH = natH * fitScale;
+      ctx.drawImage(img, 0, 0, natW, natH,
+        dstX + (dstW - fitW) / 2,
+        dstY + (dstH - fitH) / 2,
+        fitW, fitH);
+    } else {
+      // Fill mode: object-fit:cover — src rect accounts for zoom/pan
+      const cs = Math.max(pw / natW, ph / natH);
+      const ox = (pw - natW * cs) / 2;
+      const oy = (ph - natH * cs) / 2;
+      const srcX = Math.max(0, ((0 - s.tx) / s.scale - ox) / cs);
+      const srcY = Math.max(0, ((0 - s.ty) / s.scale - oy) / cs);
+      const srcW = Math.min(pw / (s.scale * cs), natW - srcX);
+      const srcH = Math.min(ph / (s.scale * cs), natH - srcY);
+      ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
+    }
+
     ctx.restore();
 
     // Label pill
