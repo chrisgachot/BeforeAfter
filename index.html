@@ -150,6 +150,28 @@
   #sep-white { background: #333; }
   .sep-btn.active { outline: 2px solid #666; outline-offset: 1px; }
 
+  /* ── Property code preview label ── */
+  #code-preview {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 25;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.72);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    pointer-events: none;
+    white-space: nowrap;
+    display: none;
+  }
+  #code-preview.visible { display: block; }
+
   /* ── Separator live preview ── */
   .layout-stacked .panel--before { border-bottom: 1px solid #111; }
   .layout-side    .panel--before { border-right:  1px solid #111; }
@@ -307,7 +329,8 @@
   </div>
 </div>
 
-<div id="photo-container" class="layout-side">
+<div id="photo-container" class="layout-side" style="position:relative">
+  <div id="code-preview"></div>
 
   <!-- BEFORE -->
   <div class="panel panel--before" id="panel-before">
@@ -598,48 +621,50 @@ function shareComparison() {
   ctx.fillStyle = '#0f0f0f';
   ctx.fillRect(0, 0, cw, ch);
 
+  const isFit = document.body.classList.contains('fit-mode');
+
   ['before', 'after'].forEach((id, i) => {
     const img = document.getElementById('img-' + id);
     if (!img || !img.naturalWidth) return;
 
     const panel = document.getElementById('panel-' + id);
     const pw = panel.clientWidth, ph = panel.clientHeight;
-    const s = state[id];
+    const s  = state[id];
     const natW = img.naturalWidth, natH = img.naturalHeight;
-    const isFit = document.body.classList.contains('fit-mode');
 
-    // Destination on canvas
-    const dstX = isSide ? (i === 0 ? 0 : cw / 2) : 0;
-    const dstY = isSide ? 0 : (i === 0 ? 0 : ch / 2);
-    const dstW = isSide ? cw / 2 : cw;
-    const dstH = isSide ? ch : ch / 2;
+    // Destination: use actual panel clientWidth/clientHeight so any
+    // separator border offset is automatically accounted for.
+    const dstX = (isSide && i === 1) ? cw - pw : 0;
+    const dstY = (!isSide && i === 1) ? ch - ph : 0;
+    const dstW = pw, dstH = ph;
 
     ctx.save();
+    // Clip to this panel's area
     ctx.beginPath();
     ctx.rect(dstX, dstY, dstW, dstH);
     ctx.clip();
 
     if (isFit) {
-      // Fit mode: full image with letterbox/pillarbox bars
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(dstX, dstY, dstW, dstH);
-      const fitScale = Math.min(dstW / natW, dstH / natH);
-      const fitW = natW * fitScale, fitH = natH * fitScale;
-      ctx.drawImage(img, 0, 0, natW, natH,
-        dstX + (dstW - fitW) / 2,
-        dstY + (dstH - fitH) / 2,
-        fitW, fitH);
-    } else {
-      // Fill mode: object-fit:cover — src rect accounts for zoom/pan
-      const cs = Math.max(pw / natW, ph / natH);
-      const ox = (pw - natW * cs) / 2;
-      const oy = (ph - natH * cs) / 2;
-      const srcX = Math.max(0, ((0 - s.tx) / s.scale - ox) / cs);
-      const srcY = Math.max(0, ((0 - s.ty) / s.scale - oy) / cs);
-      const srcW = Math.min(pw / (s.scale * cs), natW - srcX);
-      const srcH = Math.min(ph / (s.scale * cs), natH - srcY);
-      ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
     }
+
+    // ── Replicate the CSS rendering exactly ──
+    // CSS does: transform-origin:0 0; transform:translate(tx,ty) scale(s)
+    // on an element that uses object-fit:[cover|contain] to display the image.
+    // We mirror that sequence directly on the canvas context so there is
+    // no inverse-transform math and no rounding drift.
+    const cs = isFit
+      ? Math.min(pw / natW, ph / natH)   // contain
+      : Math.max(pw / natW, ph / natH);  // cover
+    const ox = (pw - natW * cs) / 2;     // image offset inside element
+    const oy = (ph - natH * cs) / 2;
+
+    ctx.translate(dstX, dstY);           // move into this panel's region
+    ctx.translate(s.tx, s.ty);           // same translation CSS applies
+    ctx.scale(s.scale, s.scale);         // same zoom CSS applies
+    ctx.drawImage(img,                   // draw image at its object-fit position
+      ox, oy, natW * cs, natH * cs);
 
     ctx.restore();
 
@@ -661,8 +686,16 @@ function shareComparison() {
   const SEP_W  = sepColor === 'none' ? 1 : 6;
   const SEP_COL = sepColor === 'white' ? '#fff' : '#000';
   ctx.fillStyle = SEP_COL;
-  if (isSide) ctx.fillRect(Math.round(cw / 2 - SEP_W / 2), 0, SEP_W, ch);
-  else        ctx.fillRect(0, Math.round(ch / 2 - SEP_W / 2), cw, SEP_W);
+  // Separator sits between the two panels; find the gap by looking at where
+  // the after-panel actually starts in the canvas.
+  const afterPanel = document.getElementById('panel-after');
+  const afterRect  = afterPanel.getBoundingClientRect();
+  const containerRect = document.getElementById('photo-container').getBoundingClientRect();
+  const sepPos = isSide
+    ? Math.round(afterRect.left - containerRect.left - SEP_W / 2)
+    : Math.round(afterRect.top  - containerRect.top  - SEP_W / 2);
+  if (isSide) ctx.fillRect(sepPos, 0, SEP_W, ch);
+  else        ctx.fillRect(0, sepPos, cw, SEP_W);
 
   // ── Property code label ──
   const code = document.getElementById('code-input').value.trim().toUpperCase();
