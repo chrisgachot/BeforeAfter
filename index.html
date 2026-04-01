@@ -273,14 +273,14 @@
 <body>
 
 <div id="toolbar">
-  <button class="toggle-btn active" id="btn-stacked" onclick="setLayout('stacked')">
+  <button class="toggle-btn" id="btn-stacked" onclick="setLayout('stacked')">
     <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
       <rect x="1" y="1" width="11" height="5" rx="1"/>
       <rect x="1" y="7" width="11" height="5" rx="1"/>
     </svg>
     Top / Bottom
   </button>
-  <button class="toggle-btn" id="btn-side" onclick="setLayout('side')">
+  <button class="toggle-btn active" id="btn-side" onclick="setLayout('side')">
     <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
       <rect x="1" y="1" width="5" height="11" rx="1"/>
       <rect x="7" y="1" width="5" height="11" rx="1"/>
@@ -289,7 +289,7 @@
   </button>
 </div>
 
-<div id="photo-container" class="layout-stacked">
+<div id="photo-container" class="layout-side">
 
   <!-- BEFORE -->
   <div class="panel panel--before" id="panel-before">
@@ -383,22 +383,37 @@
 
 <script>
 // ═══════════════════════════════════════════════════
-// PREVENT BROWSER-LEVEL ZOOM
+// PREVENT BROWSER-LEVEL ZOOM  (comprehensive)
 // ═══════════════════════════════════════════════════
 
-// Safari: block pinch-gesture events on the document
+// 1. Safari: proprietary gesture events
 document.addEventListener('gesturestart',  e => e.preventDefault(), { passive: false });
 document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
 document.addEventListener('gestureend',    e => e.preventDefault(), { passive: false });
 
-// Desktop: block ctrl+scroll page zoom
-document.addEventListener('wheel', e => {
-  if (e.ctrlKey) e.preventDefault();
+// 2. All browsers: block ALL touchmove at document level.
+//    This is the most reliable way to stop page zoom on Android Chrome,
+//    which ignores user-scalable=no since Chrome 55.
+//    Our in-element touchmove handlers still fire first (bubble order),
+//    so zoom/pan inside the panels is unaffected.
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// 3. Block multi-touch touchstart at document level (extra safety for iOS)
+document.addEventListener('touchstart', e => {
+  if (e.touches.length > 1) e.preventDefault();
 }, { passive: false });
 
-// Prevent multi-touch scrolling on the document (fallback for older browsers)
-document.addEventListener('touchmove', e => {
-  if (e.touches.length > 1) e.preventDefault();
+// 4. Prevent double-tap zoom
+let _lastTap = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - _lastTap < 300) e.preventDefault();
+  _lastTap = now;
+}, { passive: false });
+
+// 5. Desktop: block ctrl+scroll page zoom
+document.addEventListener('wheel', e => {
+  if (e.ctrlKey) e.preventDefault();
 }, { passive: false });
 
 // ═══════════════════════════════════════════════════
@@ -448,104 +463,119 @@ function zoomReset(id) {
 }
 
 // ═══════════════════════════════════════════════════
-// PINCH-TO-ZOOM + PAN  (Pointer Events API)
+// PINCH-TO-ZOOM + PAN  (Touch Events — most reliable on mobile)
 // ═══════════════════════════════════════════════════
 
 function attachZoom(id) {
   const wrapper = document.getElementById('zoom-' + id);
 
-  // Map of active pointer IDs → {x, y} in client space
-  const ptrs = new Map();
+  // Track previous gesture state in panel-relative coords
+  let lastMidX = null, lastMidY = null, lastDist = null;
 
-  // Previous midpoint in client space (for panning during pinch)
-  let prevMidX = null, prevMidY = null;
-  let prevDist = null;
-
-  function midpoint() {
-    const pts = [...ptrs.values()];
-    if (pts.length === 0) return null;
-    const mx = pts.reduce((a, p) => a + p.x, 0) / pts.length;
-    const my = pts.reduce((a, p) => a + p.y, 0) / pts.length;
-    return { x: mx, y: my };
-  }
-
-  function distance() {
-    const pts = [...ptrs.values()];
-    if (pts.length < 2) return null;
-    return Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-  }
-
-  function onDown(e) {
-    e.preventDefault();
-    wrapper.setPointerCapture(e.pointerId);
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    // Snapshot current midpoint + distance for next move
-    const mid = midpoint();
-    prevMidX = mid ? mid.x : null;
-    prevMidY = mid ? mid.y : null;
-    prevDist = distance();
-  }
-
-  function onMove(e) {
-    if (!ptrs.has(e.pointerId)) return;
-    e.preventDefault();
-    ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    const s    = state[id];
+  function readTouches(e) {
+    // Always use e.touches (all current touches), not changedTouches
     const rect = wrapper.getBoundingClientRect();
-    const mid  = midpoint();
-    const dist = distance();
+    const ts = Array.from(e.touches);
+    return { ts, rect };
+  }
 
-    if (mid && prevMidX !== null) {
-      // ── Pan: apply midpoint delta ──
-      const dmx = mid.x - prevMidX;
-      const dmy = mid.y - prevMidY;
-      s.tx += dmx;
-      s.ty += dmy;
+  // ── touchstart: snapshot starting position ──
+  wrapper.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const { ts, rect } = readTouches(e);
+    if (ts.length >= 2) {
+      lastMidX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
+      lastMidY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
+      lastDist = Math.hypot(ts[1].clientX - ts[0].clientX, ts[1].clientY - ts[0].clientY);
+    } else {
+      lastMidX = ts[0].clientX - rect.left;
+      lastMidY = ts[0].clientY - rect.top;
+      lastDist = null;
+    }
+  }, { passive: false });
 
-      // ── Pinch zoom: zoom toward current midpoint ──
-      if (dist !== null && prevDist !== null && prevDist > 0) {
-        const ratio    = dist / prevDist;
+  // ── touchmove: pan + pinch ──
+  wrapper.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const { ts, rect } = readTouches(e);
+    const s = state[id];
+
+    if (ts.length >= 2) {
+      // ── Two fingers: pinch-zoom + pan simultaneously ──
+      const midX = (ts[0].clientX + ts[1].clientX) / 2 - rect.left;
+      const midY = (ts[0].clientY + ts[1].clientY) / 2 - rect.top;
+      const dist = Math.hypot(ts[1].clientX - ts[0].clientX, ts[1].clientY - ts[0].clientY);
+
+      if (lastDist !== null && lastMidX !== null) {
+        // Scale toward pinch midpoint
+        const ratio    = dist / lastDist;
         const newScale = Math.max(1, Math.min(8, s.scale * ratio));
         const ar       = newScale / s.scale;
-        // midpoint in panel space (after the pan we just applied)
-        const mpx = mid.x - rect.left;
-        const mpy = mid.y - rect.top;
-        s.tx = mpx - ar * (mpx - s.tx);
-        s.ty = mpy - ar * (mpy - s.ty);
+        s.tx = midX - ar * (midX - s.tx);
+        s.ty = midY - ar * (midY - s.ty);
         s.scale = newScale;
+        // Pan by midpoint movement (after scaling)
+        s.tx += midX - lastMidX;
+        s.ty += midY - lastMidY;
       }
 
-      clampState(id);
-      applyTransform(id);
+      lastMidX = midX; lastMidY = midY; lastDist = dist;
+
+    } else if (ts.length === 1) {
+      // ── One finger: pan (works at any zoom level; clamp prevents over-scroll at 1×) ──
+      const cx = ts[0].clientX - rect.left;
+      const cy = ts[0].clientY - rect.top;
+      if (lastMidX !== null) {
+        s.tx += cx - lastMidX;
+        s.ty += cy - lastMidY;
+      }
+      lastMidX = cx; lastMidY = cy; lastDist = null;
     }
 
-    prevMidX = mid ? mid.x : null;
-    prevMidY = mid ? mid.y : null;
-    prevDist = dist;
-  }
+    clampState(id);
+    applyTransform(id);
+  }, { passive: false });
 
-  function onUp(e) {
-    ptrs.delete(e.pointerId);
-    const mid = midpoint();
-    prevMidX = mid ? mid.x : null;
-    prevMidY = mid ? mid.y : null;
-    prevDist = distance();
-  }
+  // ── touchend: transition cleanly between finger counts ──
+  wrapper.addEventListener('touchend', e => {
+    const { ts, rect } = readTouches(e);
+    if (ts.length === 0) {
+      lastMidX = null; lastMidY = null; lastDist = null;
+    } else if (ts.length === 1) {
+      // One finger remains after lifting the other — reset reference point
+      // so the first move event doesn't cause a jump
+      lastMidX = ts[0].clientX - rect.left;
+      lastMidY = ts[0].clientY - rect.top;
+      lastDist = null;
+    }
+  }, { passive: false });
 
-  wrapper.addEventListener('pointerdown',   onDown,  { passive: false });
-  wrapper.addEventListener('pointermove',   onMove,  { passive: false });
-  wrapper.addEventListener('pointerup',     onUp);
-  wrapper.addEventListener('pointercancel', onUp);
+  wrapper.addEventListener('touchcancel', () => {
+    lastMidX = null; lastMidY = null; lastDist = null;
+  }, { passive: false });
 
-  // Mouse-wheel zoom (desktop)
+  // ── Mouse drag (desktop pan) ──
+  let mouseDragging = false, mousePrevX, mousePrevY;
+  wrapper.addEventListener('mousedown', e => {
+    mouseDragging = true; mousePrevX = e.clientX; mousePrevY = e.clientY;
+    e.preventDefault();
+  });
+  wrapper.addEventListener('mousemove', e => {
+    if (!mouseDragging) return;
+    const s = state[id];
+    s.tx += e.clientX - mousePrevX;
+    s.ty += e.clientY - mousePrevY;
+    mousePrevX = e.clientX; mousePrevY = e.clientY;
+    clampState(id); applyTransform(id);
+  });
+  window.addEventListener('mouseup', () => { mouseDragging = false; });
+
+  // ── Mouse-wheel zoom (desktop) ──
   wrapper.addEventListener('wheel', e => {
     e.preventDefault();
     const rect  = wrapper.getBoundingClientRect();
-    const px    = e.clientX - rect.left;
-    const py    = e.clientY - rect.top;
-    const delta = e.deltaY > 0 ? -0.15 : 0.15;
-    zoomToward(id, px, py, state[id].scale + delta);
+    zoomToward(id, e.clientX - rect.left, e.clientY - rect.top,
+               state[id].scale + (e.deltaY > 0 ? -0.15 : 0.15));
   }, { passive: false });
 }
 
