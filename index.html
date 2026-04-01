@@ -9,50 +9,263 @@
 <meta name="theme-color" content="#0f0f0f">
 <title>Before & After</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@500;600&display=swap');
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: #0f0f0f; }
-  body { display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-  .panel { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1a1a1a; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  .panel--before { border-bottom: 1px solid #000; }
-  .label { position: absolute; top: 10px; left: 10px; z-index: 10; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 20px; font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 500; pointer-events: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-  .panel--before .label { background: rgba(232,93,58,0.18); color: #e85d3a; border: 1px solid rgba(232,93,58,0.25); }
-  .panel--after .label { background: rgba(58,184,138,0.18); color: #3ab88a; border: 1px solid rgba(58,184,138,0.25); }
-  .label-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .panel--before .label-dot { background: #e85d3a; }
-  .panel--after .label-dot { background: #3ab88a; }
-  .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; user-select: none; opacity: 0.25; }
-  .empty svg { width: 36px; height: 36px; }
-  .empty-text { font-size: 11px; color: #fff; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
-  .panel input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5; }
-  .preview-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: #0f0f0f;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ── Toggle bar ── */
+  #toolbar {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 6px;
+    background: #0f0f0f;
+    gap: 6px;
+  }
+
+  .toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    color: #555;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.18s;
+  }
+
+  .toggle-btn svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  .toggle-btn.active {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #ccc;
+  }
+
+  /* ── Photo container ── */
+  #photo-container {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  #photo-container.layout-stacked {
+    flex-direction: column;
+  }
+
+  #photo-container.layout-side {
+    flex-direction: row;
+  }
+
+  /* ── Individual panel ── */
+  .panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .layout-stacked .panel--before { border-bottom: 1px solid #000; }
+  .layout-side    .panel--before { border-right:  1px solid #000; }
+
+  /* ── Label pill ── */
+  .label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    pointer-events: none;
+    /* solid background for legibility */
+    box-shadow: 0 1px 6px rgba(0,0,0,0.5);
+  }
+
+  .panel--before .label {
+    background: #e85d3a;
+    color: #fff;
+  }
+
+  .panel--after .label {
+    background: #3ab88a;
+    color: #fff;
+  }
+
+  /* smaller label text in side-by-side so it fits */
+  .layout-side .label {
+    font-size: 9px;
+    padding: 4px 8px;
+    letter-spacing: 0.10em;
+  }
+
+  /* ── Empty state ── */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.22;
+  }
+
+  .empty svg { width: 34px; height: 34px; }
+
+  .empty-text {
+    font-size: 11px;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── File input ── */
+  .panel input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 5;
+  }
+
+  /* ── Preview image ── */
+  .preview-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
   .preview-img.visible { display: block; }
-  .tap-change { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; padding: 4px 8px; border-radius: 4px; display: none; pointer-events: none; z-index: 10; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-  .preview-img.visible ~ .tap-change { display: block; }
+
+  /* ── Tap-to-change: hidden by default, shown only on hover (desktop) ── */
+  .tap-change {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 9px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: opacity 0.15s;
+  }
+
+  /* Only reveal on hover — on touch devices this never triggers */
+  .panel:hover .tap-change { opacity: 1; }
+  /* Never show on touch/mobile */
+  @media (hover: none) {
+    .panel:hover .tap-change { opacity: 0; }
+  }
 </style>
 </head>
 <body>
-  <div class="panel panel--before">
-    <div class="label"><span class="label-dot"></span>Before</div>
-    <div class="empty">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span class="empty-text">tap to add photo</span>
-    </div>
-    <img class="preview-img" id="preview-before" alt="Before">
-    <span class="tap-change">tap to change</span>
-    <input type="file" accept="image/*" id="input-before">
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+    <button class="toggle-btn active" id="btn-stacked" onclick="setLayout('stacked')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="1" width="11" height="5" rx="1"/>
+        <rect x="1" y="7" width="11" height="5" rx="1"/>
+      </svg>
+      Top / Bottom
+    </button>
+    <button class="toggle-btn" id="btn-side" onclick="setLayout('side')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="1" width="5" height="11" rx="1"/>
+        <rect x="7" y="1" width="5" height="11" rx="1"/>
+      </svg>
+      Side by Side
+    </button>
   </div>
-  <div class="panel panel--after">
-    <div class="label"><span class="label-dot"></span>After</div>
-    <div class="empty">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      <span class="empty-text">tap to add photo</span>
+
+  <!-- Photos -->
+  <div id="photo-container" class="layout-stacked">
+
+    <div class="panel panel--before">
+      <div class="label">Before</div>
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span class="empty-text">tap to add photo</span>
+      </div>
+      <img class="preview-img" id="preview-before" alt="Before">
+      <span class="tap-change">tap to change</span>
+      <input type="file" accept="image/*" id="input-before">
     </div>
-    <img class="preview-img" id="preview-after" alt="After">
-    <span class="tap-change">tap to change</span>
-    <input type="file" accept="image/*" id="input-after">
+
+    <div class="panel panel--after">
+      <div class="label">After</div>
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.4">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span class="empty-text">tap to add photo</span>
+      </div>
+      <img class="preview-img" id="preview-after" alt="After">
+      <span class="tap-change">tap to change</span>
+      <input type="file" accept="image/*" id="input-after">
+    </div>
+
   </div>
+
 <script>
+  // Photo upload
   function setupUpload(inputId, previewId) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
@@ -61,10 +274,20 @@
       if (!file) return;
       preview.src = URL.createObjectURL(file);
       preview.classList.add('visible');
+      // hide empty state
+      preview.closest('.panel').querySelector('.empty').style.display = 'none';
     });
   }
   setupUpload('input-before', 'preview-before');
-  setupUpload('input-after', 'preview-after');
+  setupUpload('input-after',  'preview-after');
+
+  // Layout toggle
+  function setLayout(mode) {
+    const container = document.getElementById('photo-container');
+    container.className = mode === 'side' ? 'layout-side' : 'layout-stacked';
+    document.getElementById('btn-stacked').classList.toggle('active', mode === 'stacked');
+    document.getElementById('btn-side').classList.toggle('active', mode === 'side');
+  }
 </script>
 </body>
 </html>
