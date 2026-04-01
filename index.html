@@ -33,11 +33,17 @@
   #toolbar {
     flex-shrink: 0;
     display: flex;
-    justify-content: center;
-    padding: 8px 0 6px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px 6px;
     background: #0f0f0f;
     gap: 6px;
     touch-action: manipulation;
+  }
+  #toolbar-left, #toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .toggle-btn {
     display: flex;
@@ -59,6 +65,27 @@
   }
   .toggle-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
   .toggle-btn.active { background: #1e1e1e; border-color: #444; color: #ccc; }
+
+  /* ── Icon-only toolbar buttons ── */
+  .icon-btn {
+    width: 32px; height: 32px;
+    border-radius: 20px;
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    color: #555;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.18s;
+    touch-action: manipulation;
+    flex-shrink: 0;
+  }
+  .icon-btn svg { width: 14px; height: 14px; }
+  .icon-btn:active, .icon-btn.active { background: #1e1e1e; border-color: #444; color: #ccc; }
+
+  /* ── Hide controls mode ── */
+  body.ui-hidden .zoom-controls,
+  body.ui-hidden .crop-btn-wrap { display: none !important; }
 
   /* ── Container ── */
   #photo-container {
@@ -273,20 +300,38 @@
 <body>
 
 <div id="toolbar">
-  <button class="toggle-btn" id="btn-stacked" onclick="setLayout('stacked')">
-    <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
-      <rect x="1" y="1" width="11" height="5" rx="1"/>
-      <rect x="1" y="7" width="11" height="5" rx="1"/>
-    </svg>
-    Top / Bottom
-  </button>
-  <button class="toggle-btn active" id="btn-side" onclick="setLayout('side')">
-    <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
-      <rect x="1" y="1" width="5" height="11" rx="1"/>
-      <rect x="7" y="1" width="5" height="11" rx="1"/>
-    </svg>
-    Side by Side
-  </button>
+  <div id="toolbar-left">
+    <button class="toggle-btn" id="btn-stacked" onclick="setLayout('stacked')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="1" width="11" height="5" rx="1"/>
+        <rect x="1" y="7" width="11" height="5" rx="1"/>
+      </svg>
+      Top / Bottom
+    </button>
+    <button class="toggle-btn active" id="btn-side" onclick="setLayout('side')">
+      <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="1" width="5" height="11" rx="1"/>
+        <rect x="7" y="1" width="5" height="11" rx="1"/>
+      </svg>
+      Side by Side
+    </button>
+  </div>
+  <div id="toolbar-right">
+    <!-- Hide/show panel controls -->
+    <button class="icon-btn" id="btn-hideui" onclick="toggleUI()" title="Hide controls">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
+        <circle cx="8" cy="8" r="2"/>
+      </svg>
+    </button>
+    <!-- Download combined image -->
+    <button class="icon-btn" id="btn-download" onclick="downloadComparison()" title="Download comparison">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M8 2v8M5 7l3 3 3-3"/>
+        <path d="M2 12h12" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <div id="photo-container" class="layout-side">
@@ -750,6 +795,113 @@ function setLayout(mode) {
     mode === 'side' ? 'layout-side' : 'layout-stacked';
   document.getElementById('btn-stacked').classList.toggle('active', mode === 'stacked');
   document.getElementById('btn-side').classList.toggle('active', mode === 'side');
+}
+
+// ═══════════════════════════════════════════════════
+// HIDE / SHOW PANEL CONTROLS
+// ═══════════════════════════════════════════════════
+
+function toggleUI() {
+  const hidden = document.body.classList.toggle('ui-hidden');
+  const btn = document.getElementById('btn-hideui');
+  btn.classList.toggle('active', hidden);
+  // Swap icon: eye-off when hidden, eye when visible
+  btn.innerHTML = hidden
+    ? `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+         <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
+         <line x1="3" y1="3" x2="13" y2="13"/>
+       </svg>`
+    : `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+         <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/>
+         <circle cx="8" cy="8" r="2"/>
+       </svg>`;
+}
+
+// ═══════════════════════════════════════════════════
+// DOWNLOAD COMPARISON IMAGE
+// ═══════════════════════════════════════════════════
+
+function downloadComparison() {
+  const container = document.getElementById('photo-container');
+  const isSide    = container.classList.contains('layout-side');
+  const cw = container.clientWidth, ch = container.clientHeight;
+
+  const canvas = document.createElement('canvas');
+  // 2× for sharper output on high-DPI screens
+  const DPR = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.width  = cw * DPR;
+  canvas.height = ch * DPR;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  ctx.fillStyle = '#0f0f0f';
+  ctx.fillRect(0, 0, cw, ch);
+
+  const ids = ['before', 'after'];
+
+  ids.forEach((id, i) => {
+    const img = document.getElementById('img-' + id);
+    if (!img || !img.naturalWidth) return;
+
+    const panel = document.getElementById('panel-' + id);
+    const pw = panel.clientWidth, ph = panel.clientHeight;
+    const s  = state[id];
+    const natW = img.naturalWidth, natH = img.naturalHeight;
+
+    // object-fit:cover math (same as applyCrop)
+    const cs = Math.max(pw / natW, ph / natH);
+    const ox = (pw - natW * cs) / 2;
+    const oy = (ph - natH * cs) / 2;
+
+    // Source rectangle: what's currently visible in the panel
+    const srcX = Math.max(0, ((0  - s.tx) / s.scale - ox) / cs);
+    const srcY = Math.max(0, ((0  - s.ty) / s.scale - oy) / cs);
+    const srcW = Math.min(pw / (s.scale * cs), natW - srcX);
+    const srcH = Math.min(ph / (s.scale * cs), natH - srcY);
+
+    // Destination rectangle on the output canvas
+    let dstX, dstY, dstW, dstH;
+    if (isSide) {
+      dstX = i === 0 ? 0 : cw / 2; dstY = 0;
+      dstW = cw / 2; dstH = ch;
+    } else {
+      dstX = 0; dstY = i === 0 ? 0 : ch / 2;
+      dstW = cw; dstH = ch / 2;
+    }
+
+    // Clip to destination rect before drawing (prevents overflow)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(dstX, dstY, dstW, dstH);
+    ctx.clip();
+    ctx.drawImage(img, srcX, srcY, srcW, srcH, dstX, dstY, dstW, dstH);
+    ctx.restore();
+
+    // Label pill
+    const labelText = id.toUpperCase();
+    const bgColor   = id === 'before' ? '#e85d3a' : '#3ab88a';
+    ctx.font = 'bold 11px "DM Mono", monospace';
+    const tw = ctx.measureText(labelText).width;
+    const lw = tw + 22, lh = 24, lx = dstX + 10, ly = dstY + 10, lr = 12;
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.roundRect(lx, ly, lw, lh, lr);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(labelText, lx + 11, ly + lh / 2);
+  });
+
+  // Divider line
+  ctx.fillStyle = '#000';
+  if (isSide) ctx.fillRect(cw / 2, 0, 1, ch);
+  else        ctx.fillRect(0, ch / 2, cw, 1);
+
+  // Trigger download
+  const a = document.createElement('a');
+  a.download = 'before-after.jpg';
+  a.href = canvas.toDataURL('image/jpeg', 0.93);
+  a.click();
 }
 </script>
 </body>
